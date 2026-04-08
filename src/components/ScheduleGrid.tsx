@@ -25,7 +25,7 @@ export default function ScheduleGrid({ periodId, startDate, endDate, isActive }:
   const deleteAssignment = useDeleteAssignment(periodId);
   const toggleLock = useToggleLock(periodId);
 
-  const [openCell, setOpenCell] = useState<string | null>(null); // "memberId-date"
+  const [openCell, setOpenCell] = useState<string | null>(null);
   const cellRefs = useRef<Record<string, HTMLTableCellElement | null>>({});
 
   const dates = useMemo(() => {
@@ -81,117 +81,105 @@ export default function ScheduleGrid({ periodId, startDate, endDate, isActive }:
   }, [assignments, shiftTypes]);
 
   return (
-    <div className="relative">
-      <div className="overflow-x-auto">
-        <table className="text-xs border-collapse">
-          <thead>
-            <tr>
-              <th className="sticky left-0 z-10 bg-pastel-pink-light px-3 py-2.5 text-left font-semibold text-warm-dark border-b border-pastel-pink/20 min-w-[150px]">
-                Miembro
-              </th>
-              <th className="sticky left-[150px] z-10 bg-pastel-pink-light px-2 py-2.5 text-center font-semibold text-warm-dark border-b border-r border-pastel-pink/20 w-[50px]">
-                Horas
-              </th>
+    <div className="overflow-x-auto">
+      <table className="text-xs border-collapse w-full">
+        <thead>
+          <tr>
+            <th className="sticky left-0 z-10 bg-surface px-4 py-3 text-left text-[10px] font-semibold text-text-tertiary uppercase tracking-wide border-b border-[#F0EDF3] min-w-[160px]">
+              Miembro
+            </th>
+            <th className="sticky left-[160px] z-10 bg-surface px-2 py-3 text-center text-[10px] font-semibold text-text-tertiary uppercase tracking-wide border-b border-r border-[#F0EDF3] w-[50px]">
+              Horas
+            </th>
+            {dates.map((d) => {
+              const dayOfWeek = new Date(d + "T00:00:00").getDay();
+              const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+              return (
+                <th key={d} className={`px-1 py-2 text-center border-b border-[#F0EDF3] min-w-[38px] ${isWeekend ? "bg-p-lavender-light/50" : "bg-surface"}`}>
+                  <div className={`text-[10px] font-semibold ${isWeekend ? "text-purple-400" : "text-text-tertiary"}`}>{DAY_NAMES[dayOfWeek]}</div>
+                  <div className="text-xs font-medium text-text-secondary">{parseInt(d.slice(8))}</div>
+                </th>
+              );
+            })}
+          </tr>
+        </thead>
+        <tbody>
+          {members?.map((member) => (
+            <tr key={member.id} className="group hover:bg-p-lavender-light/20 transition-colors">
+              <td className="sticky left-0 z-10 bg-surface-card group-hover:bg-p-lavender-light/20 px-4 py-2 border-b border-[#F0EDF3] transition-colors">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: member.color_tag }}>
+                    {member.full_name.charAt(0)}
+                  </div>
+                  <span className="font-medium text-text-primary text-[13px] truncate">{member.full_name}</span>
+                </div>
+              </td>
+              <td className="sticky left-[160px] z-10 bg-surface-card group-hover:bg-p-lavender-light/20 px-2 py-2 text-center border-b border-r border-[#F0EDF3] transition-colors">
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                  (memberHours[member.id] || 0) > member.weekly_hour_limit * 4
+                    ? "bg-p-peach text-amber-800"
+                    : "text-text-secondary"
+                }`}>
+                  {memberHours[member.id] || 0}h
+                </span>
+              </td>
               {dates.map((d) => {
+                const key = `${member.id}-${d}`;
+                const assignment = assignmentMap[key];
+                const st = assignment ? stMap[assignment.shift_type_id] : null;
                 const dayOfWeek = new Date(d + "T00:00:00").getDay();
                 const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                const isOpen = openCell === key;
+
                 return (
-                  <th key={d} className={`px-1 py-1.5 text-center font-medium border-b border-pastel-pink/20 min-w-[38px] ${isWeekend ? "bg-pastel-lavender-light/60 text-purple-400" : "bg-pastel-pink-light text-warm-secondary"}`}>
-                    <div className="text-[10px]">{DAY_NAMES[dayOfWeek]}</div>
-                    <div>{parseInt(d.slice(8))}</div>
-                  </th>
+                  <td
+                    key={d}
+                    ref={(el) => { cellRefs.current[key] = el; }}
+                    className={`px-0.5 py-0.5 border-b border-[#F0EDF3]/60 text-center transition-colors ${
+                      isWeekend ? "bg-p-lavender-light/30" : ""
+                    } ${!isActive ? "cursor-pointer hover:bg-p-pink-light/40" : ""}`}
+                  >
+                    <RadixPopover.Root open={isOpen} onOpenChange={(open) => { if (!isActive) setOpenCell(open ? key : null); }}>
+                      <RadixPopover.Trigger asChild>
+                        <div className="w-full h-full min-h-[28px]">
+                          {st ? (
+                            <div
+                              className="relative rounded-md px-1 py-1.5 text-white font-bold text-[10px] leading-none"
+                              style={{ backgroundColor: st.color }}
+                              title={st.name}
+                            >
+                              {st.code}
+                              {assignment.is_locked && (
+                                <Tooltip content="Desbloquear">
+                                  <button onClick={(e) => handleLockToggle(assignment, e)} className="absolute -top-1 -right-1 bg-white rounded-full p-[2px] shadow-xs">
+                                    <Lock size={7} className="text-text-tertiary" />
+                                  </button>
+                                </Tooltip>
+                              )}
+                              {!assignment.is_locked && !isActive && (
+                                <Tooltip content="Bloquear">
+                                  <button onClick={(e) => handleLockToggle(assignment, e)} className="absolute -top-1 -right-1 bg-white rounded-full p-[2px] shadow-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Unlock size={7} className="text-text-tertiary" />
+                                  </button>
+                                </Tooltip>
+                              )}
+                            </div>
+                          ) : null}
+                        </div>
+                      </RadixPopover.Trigger>
+                      <RadixPopover.Portal>
+                        <RadixPopover.Content side="bottom" align="start" sideOffset={4} collisionPadding={8} className="z-50 bg-surface-card rounded-xl border border-[#F0EDF3] shadow-lg p-2 min-w-[180px] animate-scale-in focus:outline-none">
+                          <ShiftSelector onSelect={(shiftTypeId) => handleSelect(member.id, d, shiftTypeId)} onRemove={assignment ? () => handleRemove(member.id, d) : undefined} onClose={() => setOpenCell(null)} />
+                        </RadixPopover.Content>
+                      </RadixPopover.Portal>
+                    </RadixPopover.Root>
+                  </td>
                 );
               })}
             </tr>
-          </thead>
-          <tbody>
-            {members?.map((member) => (
-              <tr key={member.id} className="hover:bg-pastel-pink-light/20 transition-colors">
-                <td className="sticky left-0 z-10 bg-pastel-pink-light/90 px-3 py-2 border-b border-pastel-pink/15">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3.5 h-3.5 rounded-full ring-1 ring-white shrink-0" style={{ backgroundColor: member.color_tag }} />
-                    <span className="font-medium text-warm-dark truncate">{member.full_name}</span>
-                  </div>
-                </td>
-                <td className="sticky left-[150px] z-10 bg-pastel-pink-light/90 px-2 py-2 text-center border-b border-r border-pastel-pink/15">
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                    (memberHours[member.id] || 0) > member.weekly_hour_limit * 4
-                      ? "bg-pastel-peach-light text-amber-700"
-                      : "text-warm-secondary"
-                  }`}>
-                    {memberHours[member.id] || 0}h
-                  </span>
-                </td>
-                {dates.map((d) => {
-                  const key = `${member.id}-${d}`;
-                  const assignment = assignmentMap[key];
-                  const st = assignment ? stMap[assignment.shift_type_id] : null;
-                  const dayOfWeek = new Date(d + "T00:00:00").getDay();
-                  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-                  const isOpen = openCell === key;
-
-                  return (
-                    <td
-                      key={d}
-                      ref={(el) => { cellRefs.current[key] = el; }}
-                      className={`px-0.5 py-0.5 border-b border-pastel-pink/10 text-center transition-colors ${
-                        isWeekend ? "bg-pastel-lavender-light/30" : ""
-                      } ${!isActive ? "cursor-pointer hover:bg-pastel-pink/20" : ""}`}
-                    >
-                      <RadixPopover.Root open={isOpen} onOpenChange={(open) => { if (!isActive) setOpenCell(open ? key : null); }}>
-                        <RadixPopover.Trigger asChild>
-                          <div className="w-full h-full min-h-[24px]">
-                            {st ? (
-                              <div
-                                className="relative rounded-lg px-1 py-1 text-white font-bold text-[10px] leading-tight shadow-sm"
-                                style={{ backgroundColor: st.color }}
-                                title={st.name}
-                              >
-                                {st.code}
-                                {assignment.is_locked && (
-                                  <Tooltip content="Bloqueado — click para desbloquear">
-                                    <button onClick={(e) => handleLockToggle(assignment, e)} className="absolute -top-1.5 -right-1.5 bg-white rounded-full p-0.5 shadow-sm">
-                                      <Lock size={8} className="text-warm-secondary" />
-                                    </button>
-                                  </Tooltip>
-                                )}
-                                {!assignment.is_locked && !isActive && (
-                                  <Tooltip content="Bloquear asignacion">
-                                    <button onClick={(e) => handleLockToggle(assignment, e)} className="absolute -top-1.5 -right-1.5 bg-white rounded-full p-0.5 shadow-sm opacity-0 hover:opacity-100 transition-opacity">
-                                      <Unlock size={8} className="text-warm-secondary" />
-                                    </button>
-                                  </Tooltip>
-                                )}
-                              </div>
-                            ) : (
-                              <div className="h-6" />
-                            )}
-                          </div>
-                        </RadixPopover.Trigger>
-                        <RadixPopover.Portal>
-                          <RadixPopover.Content
-                            side="bottom"
-                            align="start"
-                            sideOffset={4}
-                            collisionPadding={8}
-                            className="z-50 glass-card rounded-2xl shadow-elevated p-2.5 min-w-[180px] animate-scale-in focus:outline-none"
-                          >
-                            <ShiftSelector
-                              onSelect={(shiftTypeId) => handleSelect(member.id, d, shiftTypeId)}
-                              onRemove={assignment ? () => handleRemove(member.id, d) : undefined}
-                              onClose={() => setOpenCell(null)}
-                            />
-                          </RadixPopover.Content>
-                        </RadixPopover.Portal>
-                      </RadixPopover.Root>
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

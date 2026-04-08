@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { useGlobalPreferences, useUpdateGlobalPreferences } from "@/api/preferences";
 
 export default function ConfigPage() {
@@ -42,60 +42,56 @@ export default function ConfigPage() {
     );
   };
 
-  if (isLoading) return <div className="p-6 text-warm-secondary text-sm">Cargando...</div>;
+  if (isLoading) return <div className="p-8 text-text-tertiary text-sm">Cargando...</div>;
 
   return (
-    <div className="p-6 max-w-2xl">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl gradient-pink flex items-center justify-center">
-          <Settings size={20} className="text-white" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold text-warm-dark">Configuracion</h2>
-          <p className="text-sm text-warm-secondary">Preferencias globales de generacion</p>
-        </div>
+    <div className="p-8 max-w-2xl">
+      <div className="mb-8">
+        <h2 className="text-2xl font-extrabold text-text-primary tracking-tight">Ajustes</h2>
+        <p className="text-sm text-text-secondary mt-0.5">Preferencias de generacion de horarios</p>
       </div>
 
-      <div className="glass-card rounded-3xl p-8 shadow-soft space-y-6">
-        <div>
-          <h3 className="text-sm font-semibold text-warm-dark mb-4">Limites de horas</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="space-y-6">
+        {/* Limites */}
+        <div className="bg-surface-card rounded-xl border border-[#F0EDF3] p-6">
+          <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-4">Limites de horas</h3>
+          <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm text-warm-secondary mb-1.5">Horas semanales</label>
+              <label className="block text-sm text-text-secondary mb-1.5">Horas/semana</label>
               <input type="number" value={weeklyLimit} onChange={(e) => setWeeklyLimit(e.target.value)} min="1" step="0.5" className="input-pastel" />
             </div>
             <div>
-              <label className="block text-sm text-warm-secondary mb-1.5">Descanso minimo (h)</label>
+              <label className="block text-sm text-text-secondary mb-1.5">Descanso min (h)</label>
               <input type="number" value={minRest} onChange={(e) => setMinRest(e.target.value)} min="0" max="24" className="input-pastel" />
             </div>
             <div>
-              <label className="block text-sm text-warm-secondary mb-1.5">Max dias consecutivos</label>
+              <label className="block text-sm text-text-secondary mb-1.5">Max dias seguidos</label>
               <input type="number" value={maxConsecutive} onChange={(e) => setMaxConsecutive(e.target.value)} min="1" max="14" className="input-pastel" />
             </div>
           </div>
         </div>
 
-        <div className="h-px bg-gradient-to-r from-transparent via-pastel-pink to-transparent" />
-
-        <div>
-          <h3 className="text-sm font-semibold text-warm-dark mb-4">Reglas de generacion</h3>
-          <div className="space-y-2">
-            <label className="flex items-center gap-2.5 p-3 rounded-xl hover:bg-pastel-pink-light/50 transition-colors cursor-pointer">
-              <input type="checkbox" checked={weekendWork} onChange={(e) => setWeekendWork(e.target.checked)} className="rounded border-pastel-pink text-pastel-pink-deep focus:ring-pastel-pink-medium" />
-              <span className="text-sm text-warm-dark">Permitir trabajo en fines de semana</span>
-            </label>
-            <label className="flex items-center gap-2.5 p-3 rounded-xl hover:bg-pastel-pink-light/50 transition-colors cursor-pointer">
-              <input type="checkbox" checked={balanced} onChange={(e) => setBalanced(e.target.checked)} className="rounded border-pastel-pink text-pastel-pink-deep focus:ring-pastel-pink-medium" />
-              <span className="text-sm text-warm-dark">Preferir distribucion equilibrada</span>
-            </label>
-            <label className="flex items-center gap-2.5 p-3 rounded-xl hover:bg-pastel-pink-light/50 transition-colors cursor-pointer">
-              <input type="checkbox" checked={fillUnassigned} onChange={(e) => setFillUnassigned(e.target.checked)} className="rounded border-pastel-pink text-pastel-pink-deep focus:ring-pastel-pink-medium" />
-              <span className="text-sm text-warm-dark">Solo rellenar huecos sin asignar</span>
-            </label>
+        {/* Reglas */}
+        <div className="bg-surface-card rounded-xl border border-[#F0EDF3] p-6">
+          <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-4">Reglas de generacion</h3>
+          <div className="space-y-1">
+            {[
+              { checked: weekendWork, set: setWeekendWork, label: "Permitir trabajo en fines de semana" },
+              { checked: balanced, set: setBalanced, label: "Preferir distribucion equilibrada" },
+              { checked: fillUnassigned, set: setFillUnassigned, label: "Solo rellenar huecos sin asignar" },
+            ].map((item, i) => (
+              <label key={i} className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-p-lavender-light/50 transition-colors cursor-pointer">
+                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
+                  item.checked ? "bg-text-primary border-text-primary" : "border-[#D8D5DD] bg-white"
+                }`}>
+                  {item.checked && <Check size={12} className="text-white" strokeWidth={3} />}
+                </div>
+                <input type="checkbox" checked={item.checked} onChange={(e) => item.set(e.target.checked)} className="sr-only" />
+                <span className="text-sm text-text-primary">{item.label}</span>
+              </label>
+            ))}
           </div>
         </div>
-
-        <div className="h-px bg-gradient-to-r from-transparent via-pastel-pink to-transparent" />
 
         <div className="flex items-center gap-3">
           <button onClick={handleSave} disabled={updatePrefs.isPending} className="btn-primary">

@@ -70,7 +70,7 @@ export default function PeriodSelector({ selected, onSelect }: Props) {
           <button onClick={handleCreate} disabled={createPeriod.isPending} className="btn-primary text-sm px-3 py-2">
             Crear
           </button>
-          <button onClick={() => setShowNew(false)} className="text-sm text-warm-secondary hover:text-warm-dark transition-colors">
+          <button onClick={() => setShowNew(false)} className="text-sm text-text-secondary hover:text-text-primary transition-colors">
             Cancelar
           </button>
         </div>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Calendar, Download, Sparkles, CheckCircle, AlertTriangle, Clock, CalendarPlus } from "lucide-react";
+import { Download, Sparkles, CheckCircle, AlertTriangle, Clock, Calendar, CalendarPlus } from "lucide-react";
 import PeriodSelector from "@/components/PeriodSelector";
 import ScheduleGrid from "@/components/ScheduleGrid";
 import GenerateDialog from "@/components/GenerateDialog";
@@ -32,7 +32,7 @@ export default function SchedulePage() {
       a.download = `horarios_${selectedPeriod.name.replace(/ /g, "_")}.xlsx`;
       a.click();
       URL.revokeObjectURL(url);
-      toast("Excel exportado", "success");
+      toast("Excel exportado");
     } catch {
       toast("Error al exportar Excel", "error");
     }
@@ -44,43 +44,41 @@ export default function SchedulePage() {
       onSuccess: (updated) => {
         setSelectedPeriod(updated);
         setShowActivateConfirm(false);
-        toast("Periodo activado", "success");
+        toast("Periodo activado");
       },
     });
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl gradient-pink flex items-center justify-center">
-          <Calendar size={20} className="text-white" />
-        </div>
+    <div className="p-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-warm-dark">Horarios</h2>
-          <p className="text-sm text-warm-secondary">Asigna turnos al equipo</p>
+          <h2 className="text-2xl font-extrabold text-text-primary tracking-tight">Horarios</h2>
+          <p className="text-sm text-text-secondary mt-0.5">Asigna turnos al equipo</p>
         </div>
       </div>
 
-      <div className="glass-card rounded-2xl p-3 flex items-center justify-between mb-5">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between mb-5 gap-4">
         <PeriodSelector selected={selectedPeriod} onSelect={setSelectedPeriod} />
         {selectedPeriod && (
-          <div className="flex items-center gap-2.5">
-            <button onClick={handleExportExcel} className="btn-secondary text-sm px-3 py-2">
+          <div className="flex items-center gap-2 shrink-0">
+            <button onClick={handleExportExcel} className="btn-secondary text-xs px-3 py-2">
               <Download size={14} /> Excel
             </button>
-            <span className={`text-xs px-3 py-1.5 rounded-full font-medium border ${
+            <span className={`text-[10px] font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full ${
               selectedPeriod.status === "active"
-                ? "bg-pastel-mint-light text-green-700 border-pastel-mint"
-                : "bg-pastel-peach-light text-amber-700 border-pastel-peach"
+                ? "bg-p-mint text-text-primary"
+                : "bg-p-yellow text-text-primary"
             }`}>
               {selectedPeriod.status === "active" ? "Activo" : "Borrador"}
             </span>
             {selectedPeriod.status === "draft" && (
               <>
-                <button onClick={() => setShowGenerate(true)} className="btn-primary text-sm px-3 py-2" style={{ background: "linear-gradient(135deg, #c4b5fd, #e8d5f5)" }}>
+                <button onClick={() => setShowGenerate(true)} className="btn-pastel-lilac text-xs px-3 py-2">
                   <Sparkles size={14} /> Generar
                 </button>
-                <button onClick={() => setShowActivateConfirm(true)} disabled={activatePeriod.isPending} className="btn-primary text-sm px-3 py-2" style={{ background: "linear-gradient(135deg, #86efac, #c5eadb)" }}>
+                <button onClick={() => setShowActivateConfirm(true)} disabled={activatePeriod.isPending} className="btn-pastel-mint text-xs px-3 py-2">
                   <CheckCircle size={14} /> Activar
                 </button>
               </>
@@ -89,12 +87,13 @@ export default function SchedulePage() {
         )}
       </div>
 
+      {/* Warnings */}
       {warnings && warnings.length > 0 && (
-        <div className="mb-5 glass-card bg-pastel-peach-light/70 border-pastel-peach rounded-2xl p-4">
-          <h4 className="text-sm font-semibold text-amber-800 mb-2 flex items-center gap-1.5">
-            <AlertTriangle size={15} /> Avisos ({warnings.length})
+        <div className="mb-5 bg-p-peach-light border border-p-peach rounded-xl p-4 animate-slide-up">
+          <h4 className="text-xs font-semibold text-amber-800 mb-2 flex items-center gap-1.5 uppercase tracking-wide">
+            <AlertTriangle size={14} /> {warnings.length} aviso{warnings.length > 1 ? "s" : ""}
           </h4>
-          <ul className="space-y-1.5">
+          <ul className="space-y-1">
             {warnings.map((w, i) => (
               <li key={i} className="text-xs text-amber-700 flex items-center gap-2">
                 {w.type === "hours_exceeded" ? <Clock size={12} /> : <Calendar size={12} />}
@@ -105,24 +104,21 @@ export default function SchedulePage() {
         </div>
       )}
 
-      <GenerateDialog
-        periodId={selectedPeriod?.id ?? 0}
-        open={showGenerate && !!selectedPeriod}
-        onOpenChange={setShowGenerate}
-      />
+      <GenerateDialog periodId={selectedPeriod?.id ?? 0} open={showGenerate && !!selectedPeriod} onOpenChange={setShowGenerate} />
 
       <ConfirmDialog
         open={showActivateConfirm}
         onOpenChange={setShowActivateConfirm}
         title="Activar periodo"
-        description="Una vez activado, no se podran editar las asignaciones. Esta accion no se puede deshacer."
+        description="Una vez activado, no se podran editar las asignaciones."
         onConfirm={handleActivate}
         confirmLabel="Activar"
         variant="warning"
       />
 
+      {/* Grid */}
       {selectedPeriod ? (
-        <div className="glass-card rounded-2xl shadow-soft overflow-hidden">
+        <div className="bg-surface-card rounded-xl border border-[#F0EDF3] overflow-hidden shadow-xs">
           <ScheduleGrid
             periodId={selectedPeriod.id}
             startDate={selectedPeriod.start_date}
@@ -131,10 +127,12 @@ export default function SchedulePage() {
           />
         </div>
       ) : (
-        <div className="text-center py-16">
-          <CalendarPlus size={48} className="mx-auto text-pastel-pink mb-3" />
-          <p className="text-lg text-warm-dark mb-1">Selecciona o crea un periodo</p>
-          <p className="text-sm text-warm-secondary">Los horarios se organizan por mes</p>
+        <div className="text-center py-20">
+          <div className="w-16 h-16 rounded-2xl bg-p-lavender-light flex items-center justify-center mx-auto mb-4">
+            <CalendarPlus size={28} className="text-text-tertiary" />
+          </div>
+          <p className="text-lg font-semibold text-text-primary">Selecciona o crea un periodo</p>
+          <p className="text-sm text-text-secondary mt-1">Los horarios se organizan por mes</p>
         </div>
       )}
     </div>

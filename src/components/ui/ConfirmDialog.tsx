@@ -23,19 +23,19 @@ export default function ConfirmDialog({
   return (
     <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
       <AlertDialog.Portal>
-        <AlertDialog.Overlay className="fixed inset-0 z-50 bg-pastel-pink-deep/20 backdrop-blur-sm animate-fade-in" />
-        <AlertDialog.Content className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 glass-card rounded-3xl p-8 w-full max-w-sm shadow-elevated animate-scale-in focus:outline-none">
+        <AlertDialog.Overlay className="fixed inset-0 z-50 bg-text-primary/20 backdrop-blur-sm animate-fade-in" />
+        <AlertDialog.Content className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 bg-surface-card rounded-2xl p-7 w-full max-w-sm shadow-lg border border-[#F0EDF3] animate-scale-in focus:outline-none">
           <div className="flex items-start gap-3 mb-4">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-              variant === "danger" ? "bg-red-50 text-red-400" : "bg-pastel-peach-light text-amber-500"
+              variant === "danger" ? "bg-red-50 text-red-400" : "bg-p-peach-light text-amber-500"
             }`}>
               <AlertTriangle size={20} />
             </div>
             <div>
-              <AlertDialog.Title className="text-lg font-bold text-warm-dark">
+              <AlertDialog.Title className="text-lg font-bold text-text-primary tracking-tight">
                 {title}
               </AlertDialog.Title>
-              <AlertDialog.Description className="text-sm text-warm-secondary mt-1">
+              <AlertDialog.Description className="text-sm text-text-secondary mt-1">
                 {description}
               </AlertDialog.Description>
             </div>
@@ -43,10 +43,8 @@ export default function ConfirmDialog({
           <div className="flex gap-3 mt-6">
             <AlertDialog.Action
               onClick={onConfirm}
-              className={`flex-1 inline-flex items-center justify-center py-2.5 rounded-[--radius-button] text-sm font-semibold text-white transition-all duration-200 ${
-                variant === "danger"
-                  ? "bg-red-400 hover:bg-red-500"
-                  : "btn-primary"
+              className={`flex-1 inline-flex items-center justify-center py-2.5 rounded-[--radius-md] text-sm font-semibold text-white transition-all duration-150 cursor-pointer ${
+                variant === "danger" ? "bg-red-400 hover:bg-red-500" : "bg-text-primary hover:bg-sidebar-hover"
               }`}
             >
               {confirmLabel}

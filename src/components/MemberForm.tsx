@@ -42,27 +42,27 @@ export default function MemberForm({ member, onSubmit, onCancel, loading }: Prop
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label className="block text-sm font-medium text-warm-secondary mb-1.5">Nombre completo</label>
+        <label className="block text-sm font-medium text-text-secondary mb-1.5">Nombre completo</label>
         <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className="input-pastel" required />
       </div>
       <div>
-        <label className="block text-sm font-medium text-warm-secondary mb-1.5">Rol</label>
+        <label className="block text-sm font-medium text-text-secondary mb-1.5">Rol</label>
         <input type="text" value={roleName} onChange={(e) => setRoleName(e.target.value)} className="input-pastel" required />
       </div>
       <div>
-        <label className="block text-sm font-medium text-warm-secondary mb-1.5">Horas semanales</label>
+        <label className="block text-sm font-medium text-text-secondary mb-1.5">Horas semanales</label>
         <input type="number" value={weeklyHours} onChange={(e) => setWeeklyHours(e.target.value)} min="1" max="168" step="0.5" className="input-pastel" required />
       </div>
       <div>
-        <label className="block text-sm font-medium text-warm-secondary mb-1.5">Color</label>
-        <div className="flex gap-2.5 flex-wrap bg-pastel-pink-light/30 rounded-2xl p-3">
+        <label className="block text-sm font-medium text-text-secondary mb-1.5">Color</label>
+        <div className="flex gap-2.5 flex-wrap bg-p-lavender-light/50 rounded-2xl p-3">
           {PRESET_COLORS.map((c) => (
             <button
               key={c}
               type="button"
               onClick={() => setColorTag(c)}
               className={`w-8 h-8 rounded-full transition-all duration-200 hover:scale-110 ${
-                colorTag === c ? "ring-2 ring-offset-2 ring-pastel-pink-deep scale-110" : ""
+                colorTag === c ? "ring-2 ring-offset-2 ring-p-pink-deep scale-110" : ""
               }`}
               style={{ backgroundColor: c }}
             />

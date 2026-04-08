@@ -39,10 +39,10 @@ export default function ToastProvider({ children }: { children: ReactNode }) {
             key={t.id}
             open
             onOpenChange={(open) => { if (!open) removeToast(t.id); }}
-            className={`glass-card flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-elevated animate-slide-in ${
+            className={`flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-lg border animate-slide-up ${
               t.type === "success"
-                ? "bg-pastel-mint-light/90 border-pastel-mint"
-                : "bg-red-50/90 border-red-200"
+                ? "bg-p-mint-light border-p-mint"
+                : "bg-red-50 border-red-200"
             }`}
           >
             {t.type === "success"
@@ -55,7 +55,7 @@ export default function ToastProvider({ children }: { children: ReactNode }) {
               {t.message}
             </RadixToast.Description>
             <RadixToast.Close className="p-1 rounded-lg hover:bg-black/5 transition-colors">
-              <X size={14} className="text-warm-secondary" />
+              <X size={14} className="text-text-tertiary" />
             </RadixToast.Close>
           </RadixToast.Root>
         ))}

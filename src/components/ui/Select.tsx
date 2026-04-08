@@ -19,12 +19,12 @@ export default function Select({ value, onValueChange, options, placeholder = "S
       <RadixSelect.Trigger className="input-pastel inline-flex items-center justify-between gap-2 min-w-[160px] text-left">
         <RadixSelect.Value placeholder={placeholder} />
         <RadixSelect.Icon>
-          <ChevronDown size={14} className="text-warm-secondary" />
+          <ChevronDown size={14} className="text-text-tertiary" />
         </RadixSelect.Icon>
       </RadixSelect.Trigger>
       <RadixSelect.Portal>
         <RadixSelect.Content
-          className="z-50 glass-card rounded-2xl shadow-elevated p-1.5 overflow-hidden animate-scale-in"
+          className="z-50 bg-surface-card rounded-xl border border-[#F0EDF3] shadow-lg p-1.5 overflow-hidden animate-scale-in"
           position="popper"
           sideOffset={4}
         >
@@ -33,10 +33,10 @@ export default function Select({ value, onValueChange, options, placeholder = "S
               <RadixSelect.Item
                 key={opt.value}
                 value={opt.value}
-                className="relative flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-warm-dark outline-none cursor-pointer data-[highlighted]:bg-pastel-pink-light/50 transition-colors"
+                className="relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-text-primary outline-none cursor-pointer data-[highlighted]:bg-p-lavender-light/50 transition-colors"
               >
                 <RadixSelect.ItemIndicator className="absolute left-1">
-                  <Check size={12} className="text-pastel-pink-deep" />
+                  <Check size={12} className="text-p-pink-deep" />
                 </RadixSelect.ItemIndicator>
                 <RadixSelect.ItemText>{opt.label}</RadixSelect.ItemText>
               </RadixSelect.Item>

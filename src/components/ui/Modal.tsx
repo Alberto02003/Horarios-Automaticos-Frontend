@@ -13,13 +13,13 @@ export default function Modal({ open, onOpenChange, title, children }: Props) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-pastel-pink-deep/20 backdrop-blur-sm animate-fade-in" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 glass-card rounded-3xl p-8 w-full max-w-md shadow-elevated animate-scale-in focus:outline-none">
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-text-primary/20 backdrop-blur-sm animate-fade-in" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 bg-surface-card rounded-2xl p-7 w-full max-w-md shadow-lg border border-[#F0EDF3] animate-scale-in focus:outline-none">
           <div className="flex items-center justify-between mb-5">
-            <Dialog.Title className="text-lg font-bold text-warm-dark">
+            <Dialog.Title className="text-lg font-bold text-text-primary tracking-tight">
               {title}
             </Dialog.Title>
-            <Dialog.Close className="p-1.5 rounded-lg text-warm-secondary hover:bg-pastel-pink-light hover:text-warm-dark transition-colors">
+            <Dialog.Close className="p-1.5 rounded-lg text-text-tertiary hover:bg-p-lavender-light hover:text-text-primary transition-colors">
               <X size={16} />
             </Dialog.Close>
           </div>
