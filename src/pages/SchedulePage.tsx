@@ -1,11 +1,13 @@
 import { useState } from "react";
 import PeriodSelector from "@/components/PeriodSelector";
 import ScheduleGrid from "@/components/ScheduleGrid";
+import GenerateDialog from "@/components/GenerateDialog";
 import { useActivatePeriod, useValidation } from "@/api/schedule";
 import type { SchedulePeriod } from "@/types/schedule";
 
 export default function SchedulePage() {
   const [selectedPeriod, setSelectedPeriod] = useState<SchedulePeriod | null>(null);
+  const [showGenerate, setShowGenerate] = useState(false);
   const activatePeriod = useActivatePeriod();
   const { data: warnings } = useValidation(selectedPeriod?.id ?? null);
 
@@ -38,13 +40,21 @@ export default function SchedulePage() {
               {selectedPeriod.status === "active" ? "Activo" : "Borrador"}
             </span>
             {selectedPeriod.status === "draft" && (
-              <button
-                onClick={handleActivate}
-                disabled={activatePeriod.isPending}
-                className="bg-green-500 text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-green-600 disabled:opacity-50"
-              >
-                Activar periodo
-              </button>
+              <>
+                <button
+                  onClick={() => setShowGenerate(true)}
+                  className="bg-purple-500 text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-purple-600"
+                >
+                  Generar
+                </button>
+                <button
+                  onClick={handleActivate}
+                  disabled={activatePeriod.isPending}
+                  className="bg-green-500 text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-green-600 disabled:opacity-50"
+                >
+                  Activar periodo
+                </button>
+              </>
             )}
           </div>
         )}
@@ -63,6 +73,11 @@ export default function SchedulePage() {
             ))}
           </ul>
         </div>
+      )}
+
+      {/* Generate dialog */}
+      {showGenerate && selectedPeriod && (
+        <GenerateDialog periodId={selectedPeriod.id} onClose={() => setShowGenerate(false)} />
       )}
 
       {/* Grid */}
