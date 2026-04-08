@@ -23,7 +23,7 @@ export default function LoginPage() {
     try {
       const data = await api.post<LoginResponse>("/api/auth/login", { email, password });
       login(data.access_token);
-      navigate("/schedule");
+      navigate("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error de conexion");
     } finally {

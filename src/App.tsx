@@ -4,12 +4,8 @@ import { queryClient } from "@/api/queryClient";
 import { TooltipProvider } from "@/components/ui/Tooltip";
 import ToastProvider from "@/components/ui/ToastProvider";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import AppLayout from "@/layouts/AppLayout";
 import LoginPage from "@/pages/LoginPage";
-import SchedulePage from "@/pages/SchedulePage";
-import TeamPage from "@/pages/TeamPage";
-import ShiftTypesPage from "@/pages/ShiftTypesPage";
-import ConfigPage from "@/pages/ConfigPage";
+import DashboardPage from "@/pages/DashboardPage";
 
 export default function App() {
   return (
@@ -20,14 +16,9 @@ export default function App() {
             <Routes>
               <Route path="/login" element={<LoginPage />} />
               <Route element={<ProtectedRoute />}>
-                <Route element={<AppLayout />}>
-                  <Route path="/schedule" element={<SchedulePage />} />
-                  <Route path="/team" element={<TeamPage />} />
-                  <Route path="/shift-types" element={<ShiftTypesPage />} />
-                  <Route path="/config" element={<ConfigPage />} />
-                </Route>
+                <Route path="/" element={<DashboardPage />} />
               </Route>
-              <Route path="*" element={<Navigate to="/schedule" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>
         </ToastProvider>
