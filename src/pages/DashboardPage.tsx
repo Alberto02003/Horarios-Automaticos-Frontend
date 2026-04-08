@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
-import { Calendar, Download, Sparkles, CheckCircle, Trash2, LayoutGrid, CalendarDays, CalendarClock, CalendarRange, CalendarPlus } from "lucide-react";
+import { useState } from "react";
+import { Calendar, Download, Sparkles, CheckCircle, Trash2, LayoutGrid, CalendarDays, CalendarClock, CalendarRange, CalendarPlus, Home, FileEdit, CheckCircle2, ArrowLeft, Users, Clock } from "lucide-react";
 import ProfileMenu from "@/components/ProfileMenu";
 import ConfigMenu from "@/components/ConfigMenu";
-import QuickStats from "@/components/QuickStats";
 import PeriodSelector from "@/components/PeriodSelector";
 import ScheduleCalendar from "@/components/ScheduleCalendar";
 import ScheduleGrid from "@/components/ScheduleGrid";
@@ -10,31 +9,26 @@ import DayDetailPanel from "@/components/DayDetailPanel";
 import TeamModal from "@/components/TeamModal";
 import ShiftsModal from "@/components/ShiftsModal";
 import GenerateDialog from "@/components/GenerateDialog";
-import DraftsSection from "@/components/DraftsSection";
-import HistorySection from "@/components/HistorySection";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Tooltip from "@/components/ui/Tooltip";
 import { usePeriods, useActivatePeriod, useDeletePeriod, useValidation } from "@/api/schedule";
+import { useMembers } from "@/api/members";
+import { useShiftTypes } from "@/api/shiftTypes";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { SchedulePeriod } from "@/types/schedule";
 
-type ViewMode = "month" | "week" | "day" | "grid";
+type Page = "home" | "calendar";
+type CalView = "month" | "week" | "day" | "grid";
 
 export default function DashboardPage() {
   const { data: periods } = usePeriods();
+  const { data: members } = useMembers();
+  const { data: shiftTypes } = useShiftTypes();
+  const [page, setPage] = useState<Page>("home");
   const [selectedPeriod, setSelectedPeriod] = useState<SchedulePeriod | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("week");
+  const [calView, setCalView] = useState<CalView>("week");
 
-  // Auto-select active period on load
-  useEffect(() => {
-    if (periods && !selectedPeriod) {
-      const active = periods.find((p) => p.status === "active");
-      if (active) setSelectedPeriod(active);
-    }
-  }, [periods, selectedPeriod]);
-
-  // Modals
   const [showGenerate, setShowGenerate] = useState(false);
   const [showActivateConfirm, setShowActivateConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -43,8 +37,19 @@ export default function DashboardPage() {
 
   const activatePeriod = useActivatePeriod();
   const deletePeriod = useDeletePeriod();
-  const { data: warnings } = useValidation(selectedPeriod?.id ?? null);
+  useValidation(selectedPeriod?.id ?? null);
   const { toast } = useToast();
+
+  const currentYear = new Date().getFullYear();
+  const drafts = (periods || []).filter((p) => p.status === "draft");
+  const activeCurrentYear = (periods || []).filter((p) => p.status === "active" && p.year === currentYear);
+  const activeMembers = (members || []).filter((m) => m.is_active);
+  const activeShifts = (shiftTypes || []).filter((s) => s.is_active);
+
+  const openPeriod = (p: SchedulePeriod) => {
+    setSelectedPeriod(p);
+    setPage("calendar");
+  };
 
   const handleExportExcel = async () => {
     if (!selectedPeriod) return;
@@ -63,65 +68,195 @@ export default function DashboardPage() {
       a.click();
       URL.revokeObjectURL(url);
       toast("Excel exportado");
-    } catch {
-      toast("Error al exportar", "error");
-    }
+    } catch { toast("Error al exportar", "error"); }
   };
 
   const handleActivate = () => {
     if (!selectedPeriod) return;
     activatePeriod.mutate(selectedPeriod.id, {
       onSuccess: (updated) => { setSelectedPeriod(updated); setShowActivateConfirm(false); toast("Periodo activado"); },
+      onError: (err) => { setShowActivateConfirm(false); toast(err instanceof Error ? err.message : "Error", "error"); },
     });
   };
 
   const handleDelete = () => {
     if (!selectedPeriod) return;
     deletePeriod.mutate(selectedPeriod.id, {
-      onSuccess: () => { setSelectedPeriod(null); setShowDeleteConfirm(false); setSelectedDay(null); toast("Periodo eliminado"); },
+      onSuccess: () => { setSelectedPeriod(null); setShowDeleteConfirm(false); setPage("home"); toast("Periodo eliminado"); },
     });
   };
+
+  // ─── HOME PAGE ───
+  const renderHome = () => (
+    <div className="px-6 py-6 max-w-5xl mx-auto">
+      {/* Quick summary cards */}
+      <div className="grid grid-cols-4 gap-4 mb-8">
+        {[
+          { icon: Users, label: "Miembros", value: activeMembers.length, color: "bg-p-blue-light text-blue-600", onClick: () => setShowTeam(true) },
+          { icon: Clock, label: "Turnos", value: activeShifts.length, color: "bg-p-lilac/30 text-purple-600", onClick: () => setShowShifts(true) },
+          { icon: FileEdit, label: "Borradores", value: drafts.length, color: "bg-p-yellow/40 text-amber-600", onClick: undefined },
+          { icon: CheckCircle2, label: "Activos", value: activeCurrentYear.length, color: "bg-p-mint-light text-green-600", onClick: undefined },
+        ].map((s) => (
+          <button key={s.label} onClick={s.onClick} disabled={!s.onClick}
+            className={`flex items-center gap-3 px-5 py-4 rounded-2xl border border-[#F0EDF3] bg-surface-card transition-all text-left ${s.onClick ? "hover:shadow-sm hover:-translate-y-0.5 cursor-pointer" : "cursor-default"}`}
+          >
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${s.color}`}><s.icon size={18} /></div>
+            <div>
+              <p className="text-2xl font-extrabold text-text-primary tracking-tight leading-none">{s.value}</p>
+              <p className="text-[10px] font-medium text-text-tertiary uppercase tracking-wide mt-0.5">{s.label}</p>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Drafts section */}
+      <div className="mb-8">
+        <div className="flex items-center gap-2 mb-4">
+          <FileEdit size={16} className="text-text-tertiary" />
+          <h3 className="text-sm font-bold text-text-primary">Borradores</h3>
+        </div>
+        {drafts.length === 0 ? (
+          <div className="bg-surface-card rounded-2xl border border-[#F0EDF3] px-6 py-10 text-center">
+            <p className="text-sm text-text-tertiary">No hay borradores. Crea un nuevo horario para empezar.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {drafts.map((p) => (
+              <div key={p.id} onClick={() => openPeriod(p)}
+                className="bg-surface-card rounded-2xl border border-[#F0EDF3] p-5 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[9px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full bg-p-yellow/50 text-amber-700">Borrador</span>
+                  <Calendar size={14} className="text-text-tertiary" />
+                </div>
+                <p className="text-lg font-bold text-text-primary tracking-tight">{p.name}</p>
+                <p className="text-xs text-text-tertiary mt-1">{p.start_date} — {p.end_date}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Active periods section */}
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <CheckCircle2 size={16} className="text-text-tertiary" />
+          <h3 className="text-sm font-bold text-text-primary">Horarios activos — {currentYear}</h3>
+        </div>
+        {activeCurrentYear.length === 0 ? (
+          <div className="bg-surface-card rounded-2xl border border-[#F0EDF3] px-6 py-10 text-center">
+            <p className="text-sm text-text-tertiary">No hay horarios activos para este año.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {activeCurrentYear.map((p) => (
+              <div key={p.id} onClick={() => openPeriod(p)}
+                className="bg-surface-card rounded-2xl border border-[#F0EDF3] p-5 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[9px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full bg-p-mint text-green-800">Activo</span>
+                  <Calendar size={14} className="text-text-tertiary" />
+                </div>
+                <p className="text-lg font-bold text-text-primary tracking-tight">{p.name}</p>
+                <p className="text-xs text-text-tertiary mt-1">{p.start_date} — {p.end_date}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // ─── CALENDAR PAGE ───
+  const renderCalendar = () => (
+    <div className="px-6 py-5">
+      {selectedPeriod ? (
+        calView === "month" || calView === "week" || calView === "day" ? (
+          <ScheduleCalendar
+            periodId={selectedPeriod.id}
+            startDate={selectedPeriod.start_date}
+            endDate={selectedPeriod.end_date}
+            isActive={selectedPeriod.status === "active"}
+            onDayClick={(date) => setSelectedDay(date)}
+            selectedDay={selectedDay}
+            view={calView}
+          />
+        ) : (
+          <div className="bg-surface-card rounded-2xl border border-[#F0EDF3] overflow-hidden shadow-xs">
+            <ScheduleGrid
+              periodId={selectedPeriod.id}
+              startDate={selectedPeriod.start_date}
+              endDate={selectedPeriod.end_date}
+              isActive={selectedPeriod.status === "active"}
+            />
+          </div>
+        )
+      ) : (
+        <div className="text-center py-24">
+          <div className="w-16 h-16 rounded-2xl bg-p-lavender-light flex items-center justify-center mx-auto mb-4">
+            <CalendarPlus size={28} className="text-text-tertiary" />
+          </div>
+          <p className="text-lg font-semibold text-text-primary">Selecciona un periodo</p>
+          <p className="text-sm text-text-secondary mt-1">Vuelve al inicio para elegir un horario</p>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-surface">
       {/* Top bar */}
       <header className="sticky top-0 z-30 backdrop-blur-md bg-surface/80 border-b border-[#F0EDF3]/60">
         <div className="flex items-center justify-between px-6 h-14">
-          {/* Left: Logo */}
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-p-pink flex items-center justify-center">
-              <Calendar size={15} className="text-text-primary" />
+          {/* Left: Logo + back */}
+          <div className="flex items-center gap-3">
+            {page === "calendar" && (
+              <button onClick={() => { setPage("home"); setSelectedPeriod(null); }} className="p-1.5 rounded-xl hover:bg-p-lavender-light transition-colors">
+                <ArrowLeft size={16} className="text-text-secondary" />
+              </button>
+            )}
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-p-pink flex items-center justify-center">
+                <Calendar size={15} className="text-text-primary" />
+              </div>
+              <span className="text-[15px] font-bold text-text-primary tracking-tight">Horarios</span>
             </div>
-            <span className="text-[15px] font-bold text-text-primary tracking-tight">Horarios</span>
           </div>
 
-          {/* Center: just the view toggle on small screens or empty */}
-          <div />
+          {/* Center: page tabs */}
+          <div className="flex items-center gap-1 bg-[#F0EDF3]/50 rounded-xl p-1">
+            <button onClick={() => { setPage("home"); setSelectedPeriod(null); }}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                page === "home" ? "bg-surface-card shadow-xs text-text-primary" : "text-text-tertiary hover:text-text-secondary"
+              }`}
+            >
+              <Home size={13} /> Inicio
+            </button>
+            <button onClick={() => setPage("calendar")}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                page === "calendar" ? "bg-surface-card shadow-xs text-text-primary" : "text-text-tertiary hover:text-text-secondary"
+              }`}
+            >
+              <CalendarDays size={13} /> Calendario
+            </button>
+          </div>
 
-          {/* Right: View toggle + Config + Profile */}
+          {/* Right: view toggle (only in calendar) + Config + Profile */}
           <div className="flex items-center gap-2">
-            {selectedPeriod && (
-              <div className="flex items-center gap-0.5 bg-[#F0EDF3]/60 rounded-lg p-0.5 mr-2">
-                <Tooltip content="Mes">
-                  <button onClick={() => setViewMode("month")} className={`p-1.5 rounded-md transition-colors ${viewMode === "month" ? "bg-surface-card shadow-xs text-text-primary" : "text-text-tertiary"}`}>
-                    <CalendarRange size={14} />
-                  </button>
-                </Tooltip>
-                <Tooltip content="Semana">
-                  <button onClick={() => setViewMode("week")} className={`p-1.5 rounded-md transition-colors ${viewMode === "week" ? "bg-surface-card shadow-xs text-text-primary" : "text-text-tertiary"}`}>
-                    <CalendarDays size={14} />
-                  </button>
-                </Tooltip>
-                <Tooltip content="Dia">
-                  <button onClick={() => setViewMode("day")} className={`p-1.5 rounded-md transition-colors ${viewMode === "day" ? "bg-surface-card shadow-xs text-text-primary" : "text-text-tertiary"}`}>
-                    <CalendarClock size={14} />
-                  </button>
-                </Tooltip>
-                <Tooltip content="Tabla">
-                  <button onClick={() => setViewMode("grid")} className={`p-1.5 rounded-md transition-colors ${viewMode === "grid" ? "bg-surface-card shadow-xs text-text-primary" : "text-text-tertiary"}`}>
-                    <LayoutGrid size={14} />
-                  </button>
-                </Tooltip>
+            {page === "calendar" && selectedPeriod && (
+              <div className="flex items-center gap-0.5 bg-[#F0EDF3]/50 rounded-xl p-0.5 mr-1">
+                {([
+                  { mode: "month" as CalView, icon: CalendarRange, tip: "Mes" },
+                  { mode: "week" as CalView, icon: CalendarDays, tip: "Semana" },
+                  { mode: "day" as CalView, icon: CalendarClock, tip: "Dia" },
+                  { mode: "grid" as CalView, icon: LayoutGrid, tip: "Tabla" },
+                ]).map((v) => (
+                  <Tooltip key={v.mode} content={v.tip}>
+                    <button onClick={() => setCalView(v.mode)} className={`p-1.5 rounded-lg transition-colors ${calView === v.mode ? "bg-surface-card shadow-xs text-text-primary" : "text-text-tertiary"}`}>
+                      <v.icon size={13} />
+                    </button>
+                  </Tooltip>
+                ))}
               </div>
             )}
             <ConfigMenu />
@@ -130,104 +265,55 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      {/* Content */}
-      <div className="px-6 py-5">
-        {/* Quick stats */}
-        <div className="mb-5">
-          <QuickStats
-            period={selectedPeriod}
-            warnings={warnings || []}
-            onOpenTeam={() => setShowTeam(true)}
-            onOpenShifts={() => setShowShifts(true)}
-          />
-        </div>
+      {/* Page content */}
+      {page === "home" ? renderHome() : renderCalendar()}
 
-        {/* Calendar / Grid */}
-        {selectedPeriod ? (
-          viewMode === "month" || viewMode === "week" || viewMode === "day" ? (
-            <ScheduleCalendar
-              periodId={selectedPeriod.id}
-              startDate={selectedPeriod.start_date}
-              endDate={selectedPeriod.end_date}
-              isActive={selectedPeriod.status === "active"}
-              onDayClick={(date) => setSelectedDay(date)}
-              selectedDay={selectedDay}
-              view={viewMode}
-            />
-          ) : (
-            <div className="bg-surface-card rounded-xl border border-[#F0EDF3] overflow-hidden shadow-xs">
-              <ScheduleGrid
-                periodId={selectedPeriod.id}
-                startDate={selectedPeriod.start_date}
-                endDate={selectedPeriod.end_date}
-                isActive={selectedPeriod.status === "active"}
-              />
-            </div>
-          )
-        ) : (
-          <div className="text-center py-24">
-            <div className="w-16 h-16 rounded-2xl bg-p-lavender-light flex items-center justify-center mx-auto mb-4">
-              <CalendarPlus size={28} className="text-text-tertiary" />
-            </div>
-            <p className="text-lg font-semibold text-text-primary">Selecciona o crea un periodo</p>
-            <p className="text-sm text-text-secondary mt-1">Los horarios se organizan por mes</p>
+      {/* Floating bottom bar — only in calendar view with period */}
+      {page === "calendar" && selectedPeriod && (
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40">
+          <div className="flex items-center gap-2 bg-surface-card/95 backdrop-blur-lg border border-[#F0EDF3] rounded-2xl shadow-lg px-4 py-2.5">
+            <PeriodSelector selected={selectedPeriod} onSelect={setSelectedPeriod} />
+            <div className="w-px h-6 bg-[#F0EDF3] mx-1" />
+            <span className={`text-[9px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-xl ${
+              selectedPeriod.status === "active" ? "bg-p-mint text-text-primary" : "bg-p-yellow/60 text-text-primary"
+            }`}>
+              {selectedPeriod.status === "active" ? "Activo" : "Borrador"}
+            </span>
+            {selectedPeriod.status === "draft" && (
+              <>
+                <button onClick={() => setShowGenerate(true)} className="btn-pastel-lilac text-[11px] px-3 py-1.5 rounded-xl"><Sparkles size={13} /> Generar</button>
+                <button onClick={() => setShowActivateConfirm(true)} className="btn-pastel-mint text-[11px] px-3 py-1.5 rounded-xl"><CheckCircle size={13} /> Activar</button>
+              </>
+            )}
+            <div className="w-px h-6 bg-[#F0EDF3] mx-1" />
+            <Tooltip content="Exportar Excel">
+              <button onClick={handleExportExcel} className="p-2 rounded-xl hover:bg-p-lavender-light transition-colors"><Download size={15} className="text-text-secondary" /></button>
+            </Tooltip>
+            <Tooltip content="Eliminar">
+              <button onClick={() => setShowDeleteConfirm(true)} className="p-2 rounded-xl hover:bg-p-pink-light transition-colors"><Trash2 size={15} className="text-text-tertiary" /></button>
+            </Tooltip>
           </div>
-        )}
-
-        {/* Drafts + History sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
-          <DraftsSection onLoadDraft={(p) => setSelectedPeriod(p)} />
-          <HistorySection onSelectPeriod={(p) => setSelectedPeriod(p)} />
         </div>
-      </div>
+      )}
 
-      {/* Floating bottom bar */}
-      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40">
-        <div className="flex items-center gap-2 bg-surface-card/95 backdrop-blur-lg border border-[#F0EDF3] rounded-2xl shadow-lg px-4 py-2.5">
-          <PeriodSelector selected={selectedPeriod} onSelect={setSelectedPeriod} />
-          {selectedPeriod && (
-            <>
-              <div className="w-px h-6 bg-[#F0EDF3] mx-1" />
-              <span className={`text-[9px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full ${
-                selectedPeriod.status === "active" ? "bg-p-mint text-text-primary" : "bg-p-yellow/60 text-text-primary"
-              }`}>
-                {selectedPeriod.status === "active" ? "Activo" : "Borrador"}
-              </span>
-              {selectedPeriod.status === "draft" && (
-                <>
-                  <button onClick={() => setShowGenerate(true)} className="btn-pastel-lilac text-[11px] px-2.5 py-1.5"><Sparkles size={13} /> Generar</button>
-                  <button onClick={() => setShowActivateConfirm(true)} className="btn-pastel-mint text-[11px] px-2.5 py-1.5"><CheckCircle size={13} /> Activar</button>
-                </>
-              )}
-              <div className="w-px h-6 bg-[#F0EDF3] mx-1" />
-              <Tooltip content="Exportar Excel">
-                <button onClick={handleExportExcel} className="p-2 rounded-lg hover:bg-p-lavender-light transition-colors"><Download size={15} className="text-text-secondary" /></button>
-              </Tooltip>
-              <Tooltip content="Eliminar periodo">
-                <button onClick={() => setShowDeleteConfirm(true)} className="p-2 rounded-lg hover:bg-p-pink-light transition-colors"><Trash2 size={15} className="text-text-tertiary" /></button>
-              </Tooltip>
-            </>
-          )}
+      {/* Floating create button — only on home */}
+      {page === "home" && (
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40">
+          <div className="bg-surface-card/95 backdrop-blur-lg border border-[#F0EDF3] rounded-2xl shadow-lg px-4 py-2.5">
+            <PeriodSelector selected={null} onSelect={(p) => openPeriod(p)} />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Modals */}
       {selectedDay && selectedPeriod && (
-        <DayDetailPanel
-          open={!!selectedDay}
-          onOpenChange={(open) => { if (!open) setSelectedDay(null); }}
-          periodId={selectedPeriod.id}
-          date={selectedDay}
-          isActive={selectedPeriod.status === "active"}
-        />
+        <DayDetailPanel open={!!selectedDay} onOpenChange={(open) => { if (!open) setSelectedDay(null); }} periodId={selectedPeriod.id} date={selectedDay} isActive={selectedPeriod.status === "active"} />
       )}
-
       <TeamModal open={showTeam} onOpenChange={setShowTeam} />
       <ShiftsModal open={showShifts} onOpenChange={setShowShifts} />
       <GenerateDialog periodId={selectedPeriod?.id ?? 0} open={showGenerate && !!selectedPeriod} onOpenChange={setShowGenerate} />
-
       <ConfirmDialog open={showActivateConfirm} onOpenChange={setShowActivateConfirm} title="Activar periodo" description="No se podran editar las asignaciones." onConfirm={handleActivate} confirmLabel="Activar" variant="warning" />
-      <ConfirmDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm} title="Eliminar periodo" description={`Se eliminara "${selectedPeriod?.name}" y todas sus asignaciones. Esta accion no se puede deshacer.`} onConfirm={handleDelete} confirmLabel="Eliminar" variant="danger" />
+      <ConfirmDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm} title="Eliminar periodo" description={`Se eliminara "${selectedPeriod?.name}" y todas sus asignaciones.`} onConfirm={handleDelete} confirmLabel="Eliminar" variant="danger" />
     </div>
   );
 }
