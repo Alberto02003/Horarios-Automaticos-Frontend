@@ -95,29 +95,8 @@ export default function DashboardPage() {
             <span className="text-[15px] font-bold text-text-primary tracking-tight">Horarios</span>
           </div>
 
-          {/* Center: Period selector + actions */}
-          <div className="flex items-center gap-2">
-            <PeriodSelector selected={selectedPeriod} onSelect={setSelectedPeriod} />
-            {selectedPeriod && (
-              <>
-                <span className={`text-[9px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full ${
-                  selectedPeriod.status === "active" ? "bg-p-mint text-text-primary" : "bg-p-yellow/60 text-text-primary"
-                }`}>
-                  {selectedPeriod.status === "active" ? "Activo" : "Borrador"}
-                </span>
-                {selectedPeriod.status === "draft" && (
-                  <>
-                    <button onClick={() => setShowGenerate(true)} className="btn-pastel-lilac text-[11px] px-2.5 py-1.5"><Sparkles size={13} /> Generar</button>
-                    <button onClick={() => setShowActivateConfirm(true)} className="btn-pastel-mint text-[11px] px-2.5 py-1.5"><CheckCircle size={13} /> Activar</button>
-                  </>
-                )}
-                <button onClick={handleExportExcel} className="btn-secondary text-[11px] px-2.5 py-1.5"><Download size={13} /></button>
-                <Tooltip content="Eliminar periodo">
-                  <button onClick={() => setShowDeleteConfirm(true)} className="p-1.5 rounded-lg hover:bg-p-pink-light transition-colors"><Trash2 size={14} className="text-text-tertiary" /></button>
-                </Tooltip>
-              </>
-            )}
-          </div>
+          {/* Center: just the view toggle on small screens or empty */}
+          <div />
 
           {/* Right: View toggle + Config + Profile */}
           <div className="flex items-center gap-2">
@@ -199,6 +178,36 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
           <DraftsSection onLoadDraft={(p) => setSelectedPeriod(p)} />
           <HistorySection onSelectPeriod={(p) => setSelectedPeriod(p)} />
+        </div>
+      </div>
+
+      {/* Floating bottom bar */}
+      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40">
+        <div className="flex items-center gap-2 bg-surface-card/95 backdrop-blur-lg border border-[#F0EDF3] rounded-2xl shadow-lg px-4 py-2.5">
+          <PeriodSelector selected={selectedPeriod} onSelect={setSelectedPeriod} />
+          {selectedPeriod && (
+            <>
+              <div className="w-px h-6 bg-[#F0EDF3] mx-1" />
+              <span className={`text-[9px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full ${
+                selectedPeriod.status === "active" ? "bg-p-mint text-text-primary" : "bg-p-yellow/60 text-text-primary"
+              }`}>
+                {selectedPeriod.status === "active" ? "Activo" : "Borrador"}
+              </span>
+              {selectedPeriod.status === "draft" && (
+                <>
+                  <button onClick={() => setShowGenerate(true)} className="btn-pastel-lilac text-[11px] px-2.5 py-1.5"><Sparkles size={13} /> Generar</button>
+                  <button onClick={() => setShowActivateConfirm(true)} className="btn-pastel-mint text-[11px] px-2.5 py-1.5"><CheckCircle size={13} /> Activar</button>
+                </>
+              )}
+              <div className="w-px h-6 bg-[#F0EDF3] mx-1" />
+              <Tooltip content="Exportar Excel">
+                <button onClick={handleExportExcel} className="p-2 rounded-lg hover:bg-p-lavender-light transition-colors"><Download size={15} className="text-text-secondary" /></button>
+              </Tooltip>
+              <Tooltip content="Eliminar periodo">
+                <button onClick={() => setShowDeleteConfirm(true)} className="p-2 rounded-lg hover:bg-p-pink-light transition-colors"><Trash2 size={15} className="text-text-tertiary" /></button>
+              </Tooltip>
+            </>
+          )}
         </div>
       </div>
 
