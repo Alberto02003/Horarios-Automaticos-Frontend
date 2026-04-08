@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download, Sparkles, CheckCircle, AlertTriangle, Clock, Calendar, CalendarPlus, ChevronLeft, ChevronRight, LayoutGrid, CalendarDays } from "lucide-react";
+import { Download, Sparkles, CheckCircle, AlertTriangle, Clock, Calendar, CalendarPlus, LayoutGrid, CalendarDays, Trash2 } from "lucide-react";
 import PeriodSelector from "@/components/PeriodSelector";
 import ScheduleCalendar from "@/components/ScheduleCalendar";
 import ScheduleGrid from "@/components/ScheduleGrid";
@@ -7,7 +7,7 @@ import DayDetailPanel from "@/components/DayDetailPanel";
 import GenerateDialog from "@/components/GenerateDialog";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Tooltip from "@/components/ui/Tooltip";
-import { useActivatePeriod, useValidation } from "@/api/schedule";
+import { useActivatePeriod, useDeletePeriod, useValidation } from "@/api/schedule";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { SchedulePeriod } from "@/types/schedule";
 
@@ -17,9 +17,11 @@ export default function SchedulePage() {
   const [selectedPeriod, setSelectedPeriod] = useState<SchedulePeriod | null>(null);
   const [showGenerate, setShowGenerate] = useState(false);
   const [showActivateConfirm, setShowActivateConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("calendar");
   const activatePeriod = useActivatePeriod();
+  const deletePeriod = useDeletePeriod();
   const { data: warnings } = useValidation(selectedPeriod?.id ?? null);
   const { toast } = useToast();
 
@@ -52,6 +54,18 @@ export default function SchedulePage() {
         setSelectedPeriod(updated);
         setShowActivateConfirm(false);
         toast("Periodo activado");
+      },
+    });
+  };
+
+  const handleDelete = () => {
+    if (!selectedPeriod) return;
+    deletePeriod.mutate(selectedPeriod.id, {
+      onSuccess: () => {
+        setSelectedPeriod(null);
+        setShowDeleteConfirm(false);
+        setSelectedDay(null);
+        toast("Periodo eliminado");
       },
     });
   };
@@ -119,6 +133,11 @@ export default function SchedulePage() {
                   <button onClick={() => setShowActivateConfirm(true)} disabled={activatePeriod.isPending} className="btn-pastel-mint text-xs px-3 py-2">
                     <CheckCircle size={14} /> Activar
                   </button>
+                  <Tooltip content="Eliminar borrador">
+                    <button onClick={() => setShowDeleteConfirm(true)} className="p-2 rounded-lg hover:bg-p-pink-light transition-colors">
+                      <Trash2 size={14} className="text-text-tertiary" />
+                    </button>
+                  </Tooltip>
                 </>
               )}
             </div>
@@ -194,6 +213,15 @@ export default function SchedulePage() {
         onConfirm={handleActivate}
         confirmLabel="Activar"
         variant="warning"
+      />
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Eliminar borrador"
+        description={`Se eliminara "${selectedPeriod?.name}" y todas sus asignaciones. Esta accion no se puede deshacer.`}
+        onConfirm={handleDelete}
+        confirmLabel="Eliminar"
+        variant="danger"
       />
     </div>
   );

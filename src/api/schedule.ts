@@ -23,6 +23,14 @@ export function useCreatePeriod() {
   });
 }
 
+export function useDeletePeriod() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.delete(`/api/schedule-periods/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.periods }),
+  });
+}
+
 export function useActivatePeriod() {
   const qc = useQueryClient();
   return useMutation({
