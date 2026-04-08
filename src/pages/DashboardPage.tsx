@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Calendar, Download, Sparkles, CheckCircle, Trash2, CalendarDays, CalendarClock, CalendarRange, CalendarPlus, LayoutGrid, Home, FileEdit, CheckCircle2, Users, Clock } from "lucide-react";
+import { Calendar, Download, Sparkles, CheckCircle, Trash2, LayoutGrid, CalendarDays, CalendarClock, CalendarRange, CalendarPlus, Home, FileEdit, CheckCircle2, Users, Clock } from "lucide-react";
 import CatPaws from "@/components/CatPaws";
 import ProfileMenu from "@/components/ProfileMenu";
 import ConfigMenu from "@/components/ConfigMenu";
@@ -25,8 +25,8 @@ export default function DashboardPage() {
   const { data: periods } = usePeriods();
   const { data: members } = useMembers();
   const { data: shiftTypes } = useShiftTypes();
-  const [page, setPage] = useState<Page>("calendar");
-  const [selectedPeriod, setSelectedPeriod] = useState<SchedulePeriod | null>(null);
+  const [page, setPage] = useState<Page>("home");
+  const [browsePeriod, setBrowsePeriod] = useState<SchedulePeriod | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [calView, setCalView] = useState<CalView>("week");
 
@@ -38,7 +38,6 @@ export default function DashboardPage() {
 
   const activatePeriod = useActivatePeriod();
   const deletePeriod = useDeletePeriod();
-  useValidation(selectedPeriod?.id ?? null);
   const { toast } = useToast();
 
   const now = new Date();
@@ -49,23 +48,21 @@ export default function DashboardPage() {
   const activeMembers = (members || []).filter((m) => m.is_active);
   const activeShifts = (shiftTypes || []).filter((s) => s.is_active);
 
-  // Auto-load current month's active period for calendar view
+  // The current month's active period — always shown in floating bar
   const currentMonthPeriod = useMemo(() => {
     return (periods || []).find((p) => p.status === "active" && p.year === currentYear && p.month === currentMonth) || null;
   }, [periods, currentYear, currentMonth]);
 
-  const openPeriod = (p: SchedulePeriod) => {
-    setSelectedPeriod(p);
-    setPage("calendar");
-  };
+  // What the calendar is showing: browsePeriod (user selected) or currentMonthPeriod (default)
+  const calendarPeriod = browsePeriod || currentMonthPeriod;
 
-  const handleExportExcel = async () => {
-    const p = calendarPeriod;
-    if (!p) return;
+  useValidation(calendarPeriod?.id ?? null);
+
+  const handleExportExcel = async (period: SchedulePeriod) => {
     const token = localStorage.getItem("token");
     const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8080";
     try {
-      const res = await fetch(`${apiBase}/api/schedule-periods/${p.id}/export/excel`, {
+      const res = await fetch(`${apiBase}/api/schedule-periods/${period.id}/export/excel`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Error");
@@ -73,7 +70,7 @@ export default function DashboardPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `horarios_${p.name.replace(/ /g, "_")}.xlsx`;
+      a.download = `horarios_${period.name.replace(/ /g, "_")}.xlsx`;
       a.click();
       URL.revokeObjectURL(url);
       toast("Excel exportado");
@@ -81,26 +78,23 @@ export default function DashboardPage() {
   };
 
   const handleActivate = () => {
-    const p = calendarPeriod;
-    if (!p) return;
-    activatePeriod.mutate(p.id, {
-      onSuccess: (updated) => { setSelectedPeriod(updated); setShowActivateConfirm(false); toast("Periodo activado"); },
+    if (!calendarPeriod) return;
+    activatePeriod.mutate(calendarPeriod.id, {
+      onSuccess: () => { setBrowsePeriod(null); setShowActivateConfirm(false); toast("Periodo activado"); },
       onError: (err) => { setShowActivateConfirm(false); toast(err instanceof Error ? err.message : "Error", "error"); },
     });
   };
 
   const handleDelete = () => {
-    const p = calendarPeriod;
-    if (!p) return;
-    deletePeriod.mutate(p.id, {
-      onSuccess: () => { setSelectedPeriod(null); setShowDeleteConfirm(false); setPage("home"); toast("Periodo eliminado"); },
+    if (!calendarPeriod) return;
+    deletePeriod.mutate(calendarPeriod.id, {
+      onSuccess: () => { setBrowsePeriod(null); setShowDeleteConfirm(false); toast("Periodo eliminado"); },
     });
   };
 
   // ─── HOME PAGE ───
   const renderHome = () => (
     <div className="px-6 py-6 max-w-5xl mx-auto">
-      {/* Quick summary cards */}
       <div className="grid grid-cols-4 gap-4 mb-8">
         {[
           { icon: Users, label: "Miembros", value: activeMembers.length, color: "bg-p-blue-light text-blue-600", onClick: () => setShowTeam(true) },
@@ -120,7 +114,7 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Drafts section */}
+      {/* Drafts */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-4">
           <FileEdit size={16} className="text-text-tertiary" />
@@ -133,8 +127,8 @@ export default function DashboardPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {drafts.map((p) => (
-              <div key={p.id} onClick={() => openPeriod(p)}
-                className="bg-surface-card rounded-2xl border border-[#F0EDF3] p-5 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group"
+              <div key={p.id} onClick={() => { setBrowsePeriod(p); setPage("calendar"); }}
+                className="bg-surface-card rounded-2xl border border-[#F0EDF3] p-5 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
               >
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-[9px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full bg-p-yellow/50 text-amber-700">Borrador</span>
@@ -148,7 +142,7 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Active periods section */}
+      {/* Active */}
       <div>
         <div className="flex items-center gap-2 mb-4">
           <CheckCircle2 size={16} className="text-text-tertiary" />
@@ -161,7 +155,7 @@ export default function DashboardPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {activeCurrentYear.map((p) => (
-              <div key={p.id} onClick={() => openPeriod(p)}
+              <div key={p.id} onClick={() => { setBrowsePeriod(p); setPage("calendar"); }}
                 className="bg-surface-card rounded-2xl border border-[#F0EDF3] p-5 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
               >
                 <div className="flex items-center justify-between mb-3">
@@ -179,10 +173,47 @@ export default function DashboardPage() {
   );
 
   // ─── CALENDAR PAGE ───
-  const calendarPeriod = selectedPeriod || currentMonthPeriod;
-
   const renderCalendar = () => (
     <div className="px-6 py-5">
+      {/* Calendar toolbar: period selector (left) + view toggle (right) */}
+      {calendarPeriod && (
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <PeriodSelector selected={calendarPeriod} onSelect={setBrowsePeriod} showAll />
+            <span className={`text-[9px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-xl ${
+              calendarPeriod.status === "active" ? "bg-p-mint text-green-800" : "bg-p-yellow/50 text-amber-700"
+            }`}>
+              {calendarPeriod.status === "active" ? "Activo" : "Borrador"}
+            </span>
+            {calendarPeriod.status === "draft" && (
+              <>
+                <button onClick={() => setShowActivateConfirm(true)} className="btn-pastel-mint text-[11px] px-3 py-1.5 rounded-xl"><CheckCircle size={13} /> Activar</button>
+                <Tooltip content="Eliminar">
+                  <button onClick={() => setShowDeleteConfirm(true)} className="p-2 rounded-xl hover:bg-p-pink-light transition-colors"><Trash2 size={14} className="text-text-tertiary" /></button>
+                </Tooltip>
+              </>
+            )}
+            <Tooltip content="Exportar Excel">
+              <button onClick={() => handleExportExcel(calendarPeriod)} className="p-2 rounded-xl hover:bg-p-lavender-light transition-colors"><Download size={14} className="text-text-secondary" /></button>
+            </Tooltip>
+          </div>
+          <div className="flex items-center gap-0.5 bg-[#F0EDF3]/50 rounded-xl p-0.5">
+            {([
+              { mode: "month" as CalView, icon: CalendarRange, tip: "Mes" },
+              { mode: "week" as CalView, icon: CalendarDays, tip: "Semana" },
+              { mode: "day" as CalView, icon: CalendarClock, tip: "Dia" },
+              { mode: "grid" as CalView, icon: LayoutGrid, tip: "Tabla" },
+            ]).map((v) => (
+              <Tooltip key={v.mode} content={v.tip}>
+                <button onClick={() => setCalView(v.mode)} className={`p-1.5 rounded-lg transition-colors ${calView === v.mode ? "bg-white shadow-xs text-text-primary" : "text-text-tertiary hover:text-text-secondary"}`}>
+                  <v.icon size={14} />
+                </button>
+              </Tooltip>
+            ))}
+          </div>
+        </div>
+      )}
+
       {calendarPeriod ? (
         calView === "month" || calView === "week" || calView === "day" ? (
           <ScheduleCalendar
@@ -193,35 +224,15 @@ export default function DashboardPage() {
             onDayClick={(date) => setSelectedDay(date)}
             selectedDay={selectedDay}
             view={calView}
-            onViewChange={setCalView}
           />
         ) : (
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-extrabold text-text-primary tracking-tight">Vista tabla</h2>
-              <div className="flex items-center gap-0.5 bg-[#F0EDF3]/50 rounded-xl p-0.5">
-                {([
-                  { mode: "month" as CalView, icon: CalendarRange, tip: "Mes" },
-                  { mode: "week" as CalView, icon: CalendarDays, tip: "Semana" },
-                  { mode: "day" as CalView, icon: CalendarClock, tip: "Dia" },
-                  { mode: "grid" as CalView, icon: LayoutGrid, tip: "Tabla" },
-                ]).map((v) => (
-                  <Tooltip key={v.mode} content={v.tip}>
-                    <button onClick={() => setCalView(v.mode)} className={`p-1.5 rounded-lg transition-colors ${calView === v.mode ? "bg-white shadow-xs text-text-primary" : "text-text-tertiary hover:text-text-secondary"}`}>
-                      <v.icon size={14} />
-                    </button>
-                  </Tooltip>
-                ))}
-              </div>
-            </div>
-            <div className="bg-surface-card rounded-2xl border border-[#F0EDF3] overflow-hidden shadow-xs">
-              <ScheduleGrid
-                periodId={calendarPeriod.id}
-                startDate={calendarPeriod.start_date}
-                endDate={calendarPeriod.end_date}
-                isActive={calendarPeriod.status === "active"}
-              />
-            </div>
+          <div className="bg-surface-card rounded-2xl border border-[#F0EDF3] overflow-hidden shadow-xs">
+            <ScheduleGrid
+              periodId={calendarPeriod.id}
+              startDate={calendarPeriod.start_date}
+              endDate={calendarPeriod.end_date}
+              isActive={calendarPeriod.status === "active"}
+            />
           </div>
         )
       ) : (
@@ -243,19 +254,15 @@ export default function DashboardPage() {
       {/* Top bar */}
       <header className="sticky top-0 z-30 backdrop-blur-md bg-surface/80 border-b border-[#F0EDF3]/60">
         <div className="flex items-center justify-between px-6 h-14">
-          {/* Left: Logo + back */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-p-pink flex items-center justify-center">
-                <Calendar size={15} className="text-text-primary" />
-              </div>
-              <span className="text-[15px] font-bold text-text-primary tracking-tight">Horarios</span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-p-pink flex items-center justify-center">
+              <Calendar size={15} className="text-text-primary" />
             </div>
+            <span className="text-[15px] font-bold text-text-primary tracking-tight">Horarios</span>
           </div>
 
-          {/* Center: page tabs */}
           <div className="flex items-center gap-1 bg-[#F0EDF3]/50 rounded-xl p-1">
-            <button onClick={() => { setPage("home"); setSelectedPeriod(null); }}
+            <button onClick={() => { setPage("home"); setBrowsePeriod(null); }}
               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 page === "home" ? "bg-surface-card shadow-xs text-text-primary" : "text-text-tertiary hover:text-text-secondary"
               }`}
@@ -271,7 +278,6 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          {/* Right: Config + Profile */}
           <div className="flex items-center gap-2">
             <ConfigMenu />
             <ProfileMenu />
@@ -282,52 +288,28 @@ export default function DashboardPage() {
       {/* Page content */}
       {page === "home" ? renderHome() : renderCalendar()}
 
-      {/* Floating bottom bar — only in calendar view with period */}
-      {page === "calendar" && calendarPeriod && (
-        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40">
-          <div className="flex items-center gap-2 bg-surface-card/95 backdrop-blur-lg border border-[#F0EDF3] rounded-2xl shadow-lg px-4 py-2.5">
-            <PeriodSelector selected={calendarPeriod} onSelect={setSelectedPeriod} />
-            <div className="w-px h-6 bg-[#F0EDF3] mx-1" />
-            <span className={`text-[9px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-xl ${
-              calendarPeriod.status === "active" ? "bg-p-mint text-text-primary" : "bg-p-yellow/60 text-text-primary"
-            }`}>
-              {calendarPeriod.status === "active" ? "Activo" : "Borrador"}
-            </span>
-            {calendarPeriod.status === "draft" && (
-              <>
-                <button onClick={() => setShowGenerate(true)} className="btn-pastel-lilac text-[11px] px-3 py-1.5 rounded-xl"><Sparkles size={13} /> Generar</button>
-                <button onClick={() => setShowActivateConfirm(true)} className="btn-pastel-mint text-[11px] px-3 py-1.5 rounded-xl"><CheckCircle size={13} /> Activar</button>
-              </>
-            )}
-            <div className="w-px h-6 bg-[#F0EDF3] mx-1" />
-            <Tooltip content="Exportar Excel">
-              <button onClick={handleExportExcel} className="p-2 rounded-xl hover:bg-p-lavender-light transition-colors"><Download size={15} className="text-text-secondary" /></button>
-            </Tooltip>
-            <Tooltip content="Eliminar">
-              <button onClick={() => { setShowDeleteConfirm(true); setSelectedPeriod(calendarPeriod); }} className="p-2 rounded-xl hover:bg-p-pink-light transition-colors"><Trash2 size={15} className="text-text-tertiary" /></button>
-            </Tooltip>
-          </div>
+      {/* Floating bottom bar — always visible, shows current month active period + generate */}
+      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40">
+        <div className="flex items-center gap-3 bg-surface-card/95 backdrop-blur-lg border border-[#F0EDF3] rounded-2xl shadow-lg px-5 py-3">
+          {currentMonthPeriod ? (
+            <>
+              <button onClick={() => { setBrowsePeriod(null); setPage("calendar"); }} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <CalendarDays size={15} className="text-text-secondary" />
+                <span className="text-sm font-semibold text-text-primary">{currentMonthPeriod.name}</span>
+                <span className="text-[9px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-p-mint text-green-800">Activo</span>
+              </button>
+              <div className="w-px h-6 bg-[#F0EDF3]" />
+            </>
+          ) : (
+            <span className="text-xs text-text-tertiary">Sin horario activo este mes</span>
+          )}
+          <PeriodSelector selected={null} onSelect={(p) => { setBrowsePeriod(p); setPage("calendar"); }} />
+          <div className="w-px h-6 bg-[#F0EDF3]" />
+          <button onClick={() => { if (calendarPeriod) setShowGenerate(true); else toast("Selecciona o crea un periodo primero", "error"); }} className="btn-pastel-lilac text-[11px] px-3 py-1.5 rounded-xl">
+            <Sparkles size={13} /> Generar
+          </button>
         </div>
-      )}
-
-      {/* Floating bar — on home: show active period or create */}
-      {page === "home" && (
-        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40">
-          <div className="flex items-center gap-3 bg-surface-card/95 backdrop-blur-lg border border-[#F0EDF3] rounded-2xl shadow-lg px-4 py-2.5">
-            {currentMonthPeriod ? (
-              <>
-                <button onClick={() => openPeriod(currentMonthPeriod)} className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-p-lavender-light transition-colors">
-                  <CalendarDays size={14} className="text-text-secondary" />
-                  <span className="text-sm font-semibold text-text-primary">{currentMonthPeriod.name}</span>
-                  <span className="text-[9px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-p-mint text-green-800">Activo</span>
-                </button>
-                <div className="w-px h-6 bg-[#F0EDF3]" />
-              </>
-            ) : null}
-            <PeriodSelector selected={null} onSelect={(p) => openPeriod(p)} />
-          </div>
-        </div>
-      )}
+      </div>
 
       {/* Modals */}
       {selectedDay && calendarPeriod && (
@@ -337,7 +319,7 @@ export default function DashboardPage() {
       <ShiftsModal open={showShifts} onOpenChange={setShowShifts} />
       <GenerateDialog periodId={calendarPeriod?.id ?? 0} open={showGenerate && !!calendarPeriod} onOpenChange={setShowGenerate} />
       <ConfirmDialog open={showActivateConfirm} onOpenChange={setShowActivateConfirm} title="Activar periodo" description="No se podran editar las asignaciones." onConfirm={handleActivate} confirmLabel="Activar" variant="warning" />
-      <ConfirmDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm} title="Eliminar periodo" description={`Se eliminara "${selectedPeriod?.name}" y todas sus asignaciones.`} onConfirm={handleDelete} confirmLabel="Eliminar" variant="danger" />
+      <ConfirmDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm} title="Eliminar periodo" description={`Se eliminara "${calendarPeriod?.name}" y todas sus asignaciones.`} onConfirm={handleDelete} confirmLabel="Eliminar" variant="danger" />
     </div>
   );
 }

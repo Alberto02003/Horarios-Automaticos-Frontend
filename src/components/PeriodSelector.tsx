@@ -10,13 +10,14 @@ const MONTH_NAMES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Se
 interface Props {
   selected: SchedulePeriod | null;
   onSelect: (period: SchedulePeriod) => void;
+  showAll?: boolean; // show all periods (active+draft) instead of just active current year
 }
 
 function daysInMonth(year: number, month: number) {
   return new Date(year, month, 0).getDate();
 }
 
-export default function PeriodSelector({ selected, onSelect }: Props) {
+export default function PeriodSelector({ selected, onSelect, showAll = false }: Props) {
   const { data: periods } = usePeriods();
   const createPeriod = useCreatePeriod();
   const { toast } = useToast();
@@ -25,12 +26,13 @@ export default function PeriodSelector({ selected, onSelect }: Props) {
   const currentYear = new Date().getFullYear();
   const [newMonth, setNewMonth] = useState(new Date().getMonth() + 1);
 
-  // Only show active periods of current year in the dropdown
-  const activeCurrentYear = (periods || []).filter((p) => p.year === currentYear && p.status === "active");
+  const filteredPeriods = showAll
+    ? (periods || [])
+    : (periods || []).filter((p) => p.year === currentYear && p.status === "active");
 
-  const periodOptions = activeCurrentYear.map((p) => ({
+  const periodOptions = filteredPeriods.map((p) => ({
     value: String(p.id),
-    label: p.name,
+    label: showAll ? `${p.name}${p.status === "active" ? " ✓" : " (borrador)"}` : p.name,
   }));
 
   const monthOptions = MONTH_NAMES.map((m, i) => ({ value: String(i + 1), label: m }));
