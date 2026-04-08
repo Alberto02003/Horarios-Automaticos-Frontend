@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Calendar, Download, Sparkles, CheckCircle, AlertTriangle, Clock, CalendarPlus } from "lucide-react";
 import PeriodSelector from "@/components/PeriodSelector";
 import ScheduleGrid from "@/components/ScheduleGrid";
 import GenerateDialog from "@/components/GenerateDialog";
@@ -44,44 +45,37 @@ export default function SchedulePage() {
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl gradient-pink flex items-center justify-center">
+          <Calendar size={20} className="text-white" />
+        </div>
         <div>
-          <h2 className="text-xl font-semibold text-pink-900">Horarios</h2>
-          <p className="text-sm text-gray-500">Asigna turnos al equipo</p>
+          <h2 className="text-2xl font-bold text-warm-dark">Horarios</h2>
+          <p className="text-sm text-warm-secondary">Asigna turnos al equipo</p>
         </div>
       </div>
 
-      <div className="flex items-center justify-between mb-4">
+      <div className="glass-card rounded-2xl p-3 flex items-center justify-between mb-5">
         <PeriodSelector selected={selectedPeriod} onSelect={setSelectedPeriod} />
         {selectedPeriod && (
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleExportExcel}
-              className="border border-pink-200 text-pink-700 px-3 py-1.5 rounded-md text-sm font-medium hover:bg-pink-50"
-            >
-              Exportar Excel
+          <div className="flex items-center gap-2.5">
+            <button onClick={handleExportExcel} className="btn-secondary text-sm px-3 py-2">
+              <Download size={14} /> Excel
             </button>
-            <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+            <span className={`text-xs px-3 py-1.5 rounded-full font-medium border ${
               selectedPeriod.status === "active"
-                ? "bg-green-100 text-green-700"
-                : "bg-yellow-100 text-yellow-700"
+                ? "bg-pastel-mint-light text-green-700 border-pastel-mint"
+                : "bg-pastel-peach-light text-amber-700 border-pastel-peach"
             }`}>
               {selectedPeriod.status === "active" ? "Activo" : "Borrador"}
             </span>
             {selectedPeriod.status === "draft" && (
               <>
-                <button
-                  onClick={() => setShowGenerate(true)}
-                  className="bg-purple-500 text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-purple-600"
-                >
-                  Generar
+                <button onClick={() => setShowGenerate(true)} className="btn-primary text-sm px-3 py-2" style={{ background: "linear-gradient(135deg, #c4b5fd, #e8d5f5)" }}>
+                  <Sparkles size={14} /> Generar
                 </button>
-                <button
-                  onClick={handleActivate}
-                  disabled={activatePeriod.isPending}
-                  className="bg-green-500 text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-green-600 disabled:opacity-50"
-                >
-                  Activar periodo
+                <button onClick={handleActivate} disabled={activatePeriod.isPending} className="btn-primary text-sm px-3 py-2" style={{ background: "linear-gradient(135deg, #86efac, #c5eadb)" }}>
+                  <CheckCircle size={14} /> Activar
                 </button>
               </>
             )}
@@ -89,14 +83,15 @@ export default function SchedulePage() {
         )}
       </div>
 
-      {/* Warnings panel */}
       {warnings && warnings.length > 0 && (
-        <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-3">
-          <h4 className="text-sm font-medium text-amber-800 mb-1">Avisos ({warnings.length})</h4>
-          <ul className="space-y-1">
+        <div className="mb-5 glass-card bg-pastel-peach-light/70 border-pastel-peach rounded-2xl p-4">
+          <h4 className="text-sm font-semibold text-amber-800 mb-2 flex items-center gap-1.5">
+            <AlertTriangle size={15} /> Avisos ({warnings.length})
+          </h4>
+          <ul className="space-y-1.5">
             {warnings.map((w, i) => (
-              <li key={i} className="text-xs text-amber-700 flex items-center gap-1.5">
-                <span>{w.type === "hours_exceeded" ? "⏰" : "📅"}</span>
+              <li key={i} className="text-xs text-amber-700 flex items-center gap-2">
+                {w.type === "hours_exceeded" ? <Clock size={12} /> : <Calendar size={12} />}
                 {w.message}
               </li>
             ))}
@@ -104,14 +99,12 @@ export default function SchedulePage() {
         </div>
       )}
 
-      {/* Generate dialog */}
       {showGenerate && selectedPeriod && (
         <GenerateDialog periodId={selectedPeriod.id} onClose={() => setShowGenerate(false)} />
       )}
 
-      {/* Grid */}
       {selectedPeriod ? (
-        <div className="bg-white rounded-xl border border-pink-100 overflow-hidden">
+        <div className="glass-card rounded-2xl shadow-soft overflow-hidden">
           <ScheduleGrid
             periodId={selectedPeriod.id}
             startDate={selectedPeriod.start_date}
@@ -120,9 +113,10 @@ export default function SchedulePage() {
           />
         </div>
       ) : (
-        <div className="text-center py-16 text-gray-400">
-          <p className="text-lg mb-2">Selecciona o crea un periodo</p>
-          <p className="text-sm">Los horarios se organizan por mes</p>
+        <div className="text-center py-16">
+          <CalendarPlus size={48} className="mx-auto text-pastel-pink mb-3" />
+          <p className="text-lg text-warm-dark mb-1">Selecciona o crea un periodo</p>
+          <p className="text-sm text-warm-secondary">Los horarios se organizan por mes</p>
         </div>
       )}
     </div>

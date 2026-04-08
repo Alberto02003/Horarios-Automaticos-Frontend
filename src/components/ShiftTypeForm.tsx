@@ -54,65 +54,59 @@ export default function ShiftTypeForm({ shiftType, onSubmit, onCancel, loading }
     });
   };
 
-  const inputClass = "w-full px-3 py-2 border border-pink-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-pink-400";
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Codigo</label>
-          <input type="text" value={code} onChange={(e) => setCode(e.target.value)} className={inputClass} required maxLength={10} />
+          <label className="block text-sm font-medium text-warm-secondary mb-1.5">Codigo</label>
+          <input type="text" value={code} onChange={(e) => setCode(e.target.value)} className="input-pastel" required maxLength={10} />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} className={inputClass} required />
+          <label className="block text-sm font-medium text-warm-secondary mb-1.5">Nombre</label>
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="input-pastel" required />
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
-        <select value={category} onChange={(e) => setCategory(e.target.value)} className={inputClass}>
+        <label className="block text-sm font-medium text-warm-secondary mb-1.5">Categoria</label>
+        <select value={category} onChange={(e) => setCategory(e.target.value)} className="input-pastel">
           {CATEGORY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Hora inicio</label>
-          <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className={inputClass} />
+          <label className="block text-sm font-medium text-warm-secondary mb-1.5">Hora inicio</label>
+          <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="input-pastel" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Hora fin</label>
-          <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className={inputClass} />
+          <label className="block text-sm font-medium text-warm-secondary mb-1.5">Hora fin</label>
+          <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="input-pastel" />
         </div>
       </div>
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="countsAsWork"
-          checked={countsAsWork}
-          onChange={(e) => setCountsAsWork(e.target.checked)}
-          className="rounded border-pink-300 text-pink-500 focus:ring-pink-400"
-        />
-        <label htmlFor="countsAsWork" className="text-sm text-gray-700">Cuenta como tiempo de trabajo</label>
-      </div>
+      <label className="flex items-center gap-2.5 p-3 rounded-xl hover:bg-pastel-pink-light/50 transition-colors cursor-pointer">
+        <input type="checkbox" checked={countsAsWork} onChange={(e) => setCountsAsWork(e.target.checked)} className="rounded border-pastel-pink text-pastel-pink-deep focus:ring-pastel-pink-medium" />
+        <span className="text-sm text-warm-dark">Cuenta como tiempo de trabajo</span>
+      </label>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
-        <div className="flex gap-2 flex-wrap">
+        <label className="block text-sm font-medium text-warm-secondary mb-1.5">Color</label>
+        <div className="flex gap-2.5 flex-wrap bg-pastel-pink-light/30 rounded-2xl p-3">
           {PRESET_COLORS.map((c) => (
             <button
               key={c}
               type="button"
               onClick={() => setColor(c)}
-              className={`w-8 h-8 rounded-full border-2 transition-all ${color === c ? "border-pink-500 scale-110" : "border-transparent"}`}
+              className={`w-8 h-8 rounded-full transition-all duration-200 hover:scale-110 ${
+                color === c ? "ring-2 ring-offset-2 ring-pastel-pink-deep scale-110" : ""
+              }`}
               style={{ backgroundColor: c }}
             />
           ))}
         </div>
       </div>
-      <div className="flex gap-2 pt-2">
-        <button type="submit" disabled={loading} className="flex-1 bg-pink-500 text-white py-2 rounded-md text-sm font-medium hover:bg-pink-600 disabled:opacity-50">
+      <div className="flex gap-3 pt-2">
+        <button type="submit" disabled={loading} className="btn-primary flex-1">
           {loading ? "Guardando..." : shiftType ? "Actualizar" : "Crear"}
         </button>
-        <button type="button" onClick={onCancel} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-md text-sm font-medium hover:bg-gray-200">
+        <button type="button" onClick={onCancel} className="btn-secondary flex-1">
           Cancelar
         </button>
       </div>

@@ -40,69 +40,40 @@ export default function MemberForm({ member, onSubmit, onCancel, loading }: Prop
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Nombre completo</label>
-        <input
-          type="text"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          className="w-full px-3 py-2 border border-pink-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
-          required
-        />
+        <label className="block text-sm font-medium text-warm-secondary mb-1.5">Nombre completo</label>
+        <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className="input-pastel" required />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
-        <input
-          type="text"
-          value={roleName}
-          onChange={(e) => setRoleName(e.target.value)}
-          className="w-full px-3 py-2 border border-pink-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
-          required
-        />
+        <label className="block text-sm font-medium text-warm-secondary mb-1.5">Rol</label>
+        <input type="text" value={roleName} onChange={(e) => setRoleName(e.target.value)} className="input-pastel" required />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Horas semanales</label>
-        <input
-          type="number"
-          value={weeklyHours}
-          onChange={(e) => setWeeklyHours(e.target.value)}
-          min="1"
-          max="168"
-          step="0.5"
-          className="w-full px-3 py-2 border border-pink-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
-          required
-        />
+        <label className="block text-sm font-medium text-warm-secondary mb-1.5">Horas semanales</label>
+        <input type="number" value={weeklyHours} onChange={(e) => setWeeklyHours(e.target.value)} min="1" max="168" step="0.5" className="input-pastel" required />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
-        <div className="flex gap-2 flex-wrap">
+        <label className="block text-sm font-medium text-warm-secondary mb-1.5">Color</label>
+        <div className="flex gap-2.5 flex-wrap bg-pastel-pink-light/30 rounded-2xl p-3">
           {PRESET_COLORS.map((c) => (
             <button
               key={c}
               type="button"
               onClick={() => setColorTag(c)}
-              className={`w-8 h-8 rounded-full border-2 transition-all ${
-                colorTag === c ? "border-pink-500 scale-110" : "border-transparent"
+              className={`w-8 h-8 rounded-full transition-all duration-200 hover:scale-110 ${
+                colorTag === c ? "ring-2 ring-offset-2 ring-pastel-pink-deep scale-110" : ""
               }`}
               style={{ backgroundColor: c }}
             />
           ))}
         </div>
       </div>
-      <div className="flex gap-2 pt-2">
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex-1 bg-pink-500 text-white py-2 rounded-md text-sm font-medium hover:bg-pink-600 disabled:opacity-50"
-        >
+      <div className="flex gap-3 pt-2">
+        <button type="submit" disabled={loading} className="btn-primary flex-1">
           {loading ? "Guardando..." : member ? "Actualizar" : "Crear"}
         </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-md text-sm font-medium hover:bg-gray-200"
-        >
+        <button type="button" onClick={onCancel} className="btn-secondary flex-1">
           Cancelar
         </button>
       </div>

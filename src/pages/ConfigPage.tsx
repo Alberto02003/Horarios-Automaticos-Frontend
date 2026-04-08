@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Settings, Check } from "lucide-react";
 import { useGlobalPreferences, useUpdateGlobalPreferences } from "@/api/preferences";
 
 export default function ConfigPage() {
@@ -37,66 +38,74 @@ export default function ConfigPage() {
           fill_unassigned_only: fillUnassigned,
         },
       },
-      {
-        onSuccess: () => {
-          setSaved(true);
-          setTimeout(() => setSaved(false), 2000);
-        },
-      },
+      { onSuccess: () => { setSaved(true); setTimeout(() => setSaved(false), 2000); } },
     );
   };
 
-  const inputClass = "w-full px-3 py-2 border border-pink-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-pink-400";
-
-  if (isLoading) return <div className="p-6 text-gray-400 text-sm">Cargando...</div>;
+  if (isLoading) return <div className="p-6 text-warm-secondary text-sm">Cargando...</div>;
 
   return (
-    <div className="p-6 max-w-xl">
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-pink-900">Configuracion</h2>
-        <p className="text-sm text-gray-500">Preferencias globales de generacion de horarios</p>
+    <div className="p-6 max-w-2xl">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl gradient-pink flex items-center justify-center">
+          <Settings size={20} className="text-white" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-warm-dark">Configuracion</h2>
+          <p className="text-sm text-warm-secondary">Preferencias globales de generacion</p>
+        </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-pink-100 p-6 space-y-5">
+      <div className="glass-card rounded-3xl p-8 shadow-soft space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Limite de horas semanales</label>
-          <input type="number" value={weeklyLimit} onChange={(e) => setWeeklyLimit(e.target.value)} min="1" step="0.5" className={inputClass} />
+          <h3 className="text-sm font-semibold text-warm-dark mb-4">Limites de horas</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm text-warm-secondary mb-1.5">Horas semanales</label>
+              <input type="number" value={weeklyLimit} onChange={(e) => setWeeklyLimit(e.target.value)} min="1" step="0.5" className="input-pastel" />
+            </div>
+            <div>
+              <label className="block text-sm text-warm-secondary mb-1.5">Descanso minimo (h)</label>
+              <input type="number" value={minRest} onChange={(e) => setMinRest(e.target.value)} min="0" max="24" className="input-pastel" />
+            </div>
+            <div>
+              <label className="block text-sm text-warm-secondary mb-1.5">Max dias consecutivos</label>
+              <input type="number" value={maxConsecutive} onChange={(e) => setMaxConsecutive(e.target.value)} min="1" max="14" className="input-pastel" />
+            </div>
+          </div>
         </div>
+
+        <div className="h-px bg-gradient-to-r from-transparent via-pastel-pink to-transparent" />
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Horas minimas de descanso entre turnos</label>
-          <input type="number" value={minRest} onChange={(e) => setMinRest(e.target.value)} min="0" max="24" className={inputClass} />
+          <h3 className="text-sm font-semibold text-warm-dark mb-4">Reglas de generacion</h3>
+          <div className="space-y-2">
+            <label className="flex items-center gap-2.5 p-3 rounded-xl hover:bg-pastel-pink-light/50 transition-colors cursor-pointer">
+              <input type="checkbox" checked={weekendWork} onChange={(e) => setWeekendWork(e.target.checked)} className="rounded border-pastel-pink text-pastel-pink-deep focus:ring-pastel-pink-medium" />
+              <span className="text-sm text-warm-dark">Permitir trabajo en fines de semana</span>
+            </label>
+            <label className="flex items-center gap-2.5 p-3 rounded-xl hover:bg-pastel-pink-light/50 transition-colors cursor-pointer">
+              <input type="checkbox" checked={balanced} onChange={(e) => setBalanced(e.target.checked)} className="rounded border-pastel-pink text-pastel-pink-deep focus:ring-pastel-pink-medium" />
+              <span className="text-sm text-warm-dark">Preferir distribucion equilibrada</span>
+            </label>
+            <label className="flex items-center gap-2.5 p-3 rounded-xl hover:bg-pastel-pink-light/50 transition-colors cursor-pointer">
+              <input type="checkbox" checked={fillUnassigned} onChange={(e) => setFillUnassigned(e.target.checked)} className="rounded border-pastel-pink text-pastel-pink-deep focus:ring-pastel-pink-medium" />
+              <span className="text-sm text-warm-dark">Solo rellenar huecos sin asignar</span>
+            </label>
+          </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Maximo dias consecutivos de trabajo</label>
-          <input type="number" value={maxConsecutive} onChange={(e) => setMaxConsecutive(e.target.value)} min="1" max="14" className={inputClass} />
-        </div>
+        <div className="h-px bg-gradient-to-r from-transparent via-pastel-pink to-transparent" />
 
-        <div className="space-y-3 pt-2">
-          <label className="flex items-center gap-2">
-            <input type="checkbox" checked={weekendWork} onChange={(e) => setWeekendWork(e.target.checked)} className="rounded border-pink-300 text-pink-500 focus:ring-pink-400" />
-            <span className="text-sm text-gray-700">Permitir trabajo en fines de semana</span>
-          </label>
-          <label className="flex items-center gap-2">
-            <input type="checkbox" checked={balanced} onChange={(e) => setBalanced(e.target.checked)} className="rounded border-pink-300 text-pink-500 focus:ring-pink-400" />
-            <span className="text-sm text-gray-700">Preferir distribucion equilibrada</span>
-          </label>
-          <label className="flex items-center gap-2">
-            <input type="checkbox" checked={fillUnassigned} onChange={(e) => setFillUnassigned(e.target.checked)} className="rounded border-pink-300 text-pink-500 focus:ring-pink-400" />
-            <span className="text-sm text-gray-700">Solo rellenar huecos sin asignar</span>
-          </label>
-        </div>
-
-        <div className="pt-2">
-          <button
-            onClick={handleSave}
-            disabled={updatePrefs.isPending}
-            className="bg-pink-500 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-pink-600 disabled:opacity-50"
-          >
+        <div className="flex items-center gap-3">
+          <button onClick={handleSave} disabled={updatePrefs.isPending} className="btn-primary">
             {updatePrefs.isPending ? "Guardando..." : "Guardar cambios"}
           </button>
-          {saved && <span className="ml-3 text-sm text-green-600">Guardado</span>}
+          {saved && (
+            <span className="flex items-center gap-1.5 text-sm font-medium text-green-600 animate-fade-in">
+              <Check size={16} /> Guardado
+            </span>
+          )}
         </div>
       </div>
     </div>

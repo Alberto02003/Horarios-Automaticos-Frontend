@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AlertCircle } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { api } from "@/api/client";
 
@@ -31,36 +32,48 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-pink-50/40">
-      <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-sm border border-pink-100 w-full max-w-sm">
-        <h1 className="text-2xl font-semibold text-pink-900 mb-6">Horarios Automaticos</h1>
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+    <div className="min-h-screen flex items-center justify-center gradient-bg relative overflow-hidden">
+      {/* Decorative blurred circles */}
+      <div className="absolute top-1/4 -left-20 w-72 h-72 bg-pastel-pink/40 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/4 -right-20 w-72 h-72 bg-pastel-lavender/40 rounded-full blur-3xl" />
+
+      <form onSubmit={handleSubmit} className="relative glass-card rounded-3xl p-10 w-full max-w-md shadow-elevated animate-scale-in">
+        <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-pastel-pink-deep to-pastel-lavender bg-clip-text text-transparent">
+          Horarios
+        </h1>
+        <p className="text-sm text-warm-secondary mb-8">Automaticos</p>
+
+        {error && (
+          <div className="flex items-center gap-2 bg-red-50/80 border border-red-200 text-red-700 px-4 py-2.5 rounded-xl text-sm mb-4">
+            <AlertCircle size={16} />
+            {error}
+          </div>
+        )}
+
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-warm-secondary mb-1.5">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-pink-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+              className="input-pastel"
+              placeholder="tu@email.com"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Contrasena</label>
+            <label className="block text-sm font-medium text-warm-secondary mb-1.5">Contrasena</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-pink-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+              className="input-pastel"
+              placeholder="••••••••"
               required
             />
           </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-pink-500 text-white py-2 rounded-md text-sm font-medium hover:bg-pink-600 disabled:opacity-50"
-          >
+          <button type="submit" disabled={loading} className="btn-primary w-full mt-2">
             {loading ? "Entrando..." : "Entrar"}
           </button>
         </div>
