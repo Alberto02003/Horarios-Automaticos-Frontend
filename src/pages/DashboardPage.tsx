@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Calendar, Download, Sparkles, CheckCircle, Trash2, CalendarDays, CalendarPlus, Home, FileEdit, CheckCircle2, ArrowLeft, Users, Clock } from "lucide-react";
+import CatPaws from "@/components/CatPaws";
 import ProfileMenu from "@/components/ProfileMenu";
 import ConfigMenu from "@/components/ConfigMenu";
 import PeriodSelector from "@/components/PeriodSelector";
@@ -217,7 +218,9 @@ export default function DashboardPage() {
   );
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="min-h-screen bg-surface relative">
+      <CatPaws />
+
       {/* Top bar */}
       <header className="sticky top-0 z-30 backdrop-blur-md bg-surface/80 border-b border-[#F0EDF3]/60">
         <div className="flex items-center justify-between px-6 h-14">
