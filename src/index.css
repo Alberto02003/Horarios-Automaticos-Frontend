@@ -59,9 +59,9 @@
 
 @keyframes pawAppear {
   0% { opacity: 0; }
-  12% { opacity: 0.2; }
-  35% { opacity: 0.15; }
-  65% { opacity: 0.08; }
+  12% { opacity: 0.45; }
+  35% { opacity: 0.35; }
+  65% { opacity: 0.2; }
   100% { opacity: 0; }
 }
 
