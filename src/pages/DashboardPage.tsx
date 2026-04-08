@@ -98,12 +98,12 @@ export default function DashboardPage() {
                   <>
                     <button onClick={() => setShowGenerate(true)} className="btn-pastel-lilac text-[11px] px-2.5 py-1.5"><Sparkles size={13} /> Generar</button>
                     <button onClick={() => setShowActivateConfirm(true)} className="btn-pastel-mint text-[11px] px-2.5 py-1.5"><CheckCircle size={13} /> Activar</button>
-                    <Tooltip content="Eliminar borrador">
-                      <button onClick={() => setShowDeleteConfirm(true)} className="p-1.5 rounded-lg hover:bg-p-pink-light transition-colors"><Trash2 size={14} className="text-text-tertiary" /></button>
-                    </Tooltip>
                   </>
                 )}
                 <button onClick={handleExportExcel} className="btn-secondary text-[11px] px-2.5 py-1.5"><Download size={13} /></button>
+                <Tooltip content="Eliminar periodo">
+                  <button onClick={() => setShowDeleteConfirm(true)} className="p-1.5 rounded-lg hover:bg-p-pink-light transition-colors"><Trash2 size={14} className="text-text-tertiary" /></button>
+                </Tooltip>
               </>
             )}
           </div>
@@ -190,7 +190,7 @@ export default function DashboardPage() {
       <GenerateDialog periodId={selectedPeriod?.id ?? 0} open={showGenerate && !!selectedPeriod} onOpenChange={setShowGenerate} />
 
       <ConfirmDialog open={showActivateConfirm} onOpenChange={setShowActivateConfirm} title="Activar periodo" description="No se podran editar las asignaciones." onConfirm={handleActivate} confirmLabel="Activar" variant="warning" />
-      <ConfirmDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm} title="Eliminar borrador" description={`Se eliminara "${selectedPeriod?.name}" y todas sus asignaciones.`} onConfirm={handleDelete} confirmLabel="Eliminar" variant="danger" />
+      <ConfirmDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm} title="Eliminar periodo" description={`Se eliminara "${selectedPeriod?.name}" y todas sus asignaciones. Esta accion no se puede deshacer.`} onConfirm={handleDelete} confirmLabel="Eliminar" variant="danger" />
     </div>
   );
 }
