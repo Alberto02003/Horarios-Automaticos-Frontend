@@ -296,10 +296,20 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Floating create button — only on home */}
+      {/* Floating bar — on home: show active period or create */}
       {page === "home" && (
         <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40">
-          <div className="bg-surface-card/95 backdrop-blur-lg border border-[#F0EDF3] rounded-2xl shadow-lg px-4 py-2.5">
+          <div className="flex items-center gap-3 bg-surface-card/95 backdrop-blur-lg border border-[#F0EDF3] rounded-2xl shadow-lg px-4 py-2.5">
+            {currentMonthPeriod ? (
+              <>
+                <button onClick={() => openPeriod(currentMonthPeriod)} className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-p-lavender-light transition-colors">
+                  <CalendarDays size={14} className="text-text-secondary" />
+                  <span className="text-sm font-semibold text-text-primary">{currentMonthPeriod.name}</span>
+                  <span className="text-[9px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-p-mint text-green-800">Activo</span>
+                </button>
+                <div className="w-px h-6 bg-[#F0EDF3]" />
+              </>
+            ) : null}
             <PeriodSelector selected={null} onSelect={(p) => openPeriod(p)} />
           </div>
         </div>
