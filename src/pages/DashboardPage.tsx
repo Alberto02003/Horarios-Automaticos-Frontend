@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, Download, Sparkles, CheckCircle, Trash2, LayoutGrid, CalendarDays, CalendarClock, CalendarPlus } from "lucide-react";
+import { Calendar, Download, Sparkles, CheckCircle, Trash2, LayoutGrid, CalendarDays, CalendarClock, CalendarRange, CalendarPlus } from "lucide-react";
 import ProfileMenu from "@/components/ProfileMenu";
 import ConfigMenu from "@/components/ConfigMenu";
 import QuickStats from "@/components/QuickStats";
@@ -18,7 +18,7 @@ import { usePeriods, useActivatePeriod, useDeletePeriod, useValidation } from "@
 import { useToast } from "@/components/ui/ToastProvider";
 import type { SchedulePeriod } from "@/types/schedule";
 
-type ViewMode = "week" | "day" | "grid";
+type ViewMode = "month" | "week" | "day" | "grid";
 
 export default function DashboardPage() {
   const { data: periods } = usePeriods();
@@ -123,6 +123,11 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2">
             {selectedPeriod && (
               <div className="flex items-center gap-0.5 bg-[#F0EDF3]/60 rounded-lg p-0.5 mr-2">
+                <Tooltip content="Mes">
+                  <button onClick={() => setViewMode("month")} className={`p-1.5 rounded-md transition-colors ${viewMode === "month" ? "bg-surface-card shadow-xs text-text-primary" : "text-text-tertiary"}`}>
+                    <CalendarRange size={14} />
+                  </button>
+                </Tooltip>
                 <Tooltip content="Semana">
                   <button onClick={() => setViewMode("week")} className={`p-1.5 rounded-md transition-colors ${viewMode === "week" ? "bg-surface-card shadow-xs text-text-primary" : "text-text-tertiary"}`}>
                     <CalendarDays size={14} />
@@ -160,7 +165,7 @@ export default function DashboardPage() {
 
         {/* Calendar / Grid */}
         {selectedPeriod ? (
-          viewMode === "week" || viewMode === "day" ? (
+          viewMode === "month" || viewMode === "week" || viewMode === "day" ? (
             <ScheduleCalendar
               periodId={selectedPeriod.id}
               startDate={selectedPeriod.start_date}
