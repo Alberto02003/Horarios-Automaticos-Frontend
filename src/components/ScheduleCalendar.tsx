@@ -355,46 +355,76 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
                 </div>
               ))}
 
-              {/* Assignment blocks */}
+              {/* Assignment blocks — grouped by shift type */}
               <div className="absolute inset-0" style={{ marginLeft: "70px" }}>
-                {dayAssignments.map((a, idx) => {
-                  const shift = shiftMap[a.shift_type_id];
-                  const member = memberMap[a.member_id];
-                  if (!shift || !member) return null;
+                {(() => {
+                  // Group by shift type
+                  const groups: Record<number, Assignment[]> = {};
+                  dayAssignments.forEach((a) => {
+                    if (!groups[a.shift_type_id]) groups[a.shift_type_id] = [];
+                    groups[a.shift_type_id].push(a);
+                  });
+                  const shiftGroups = Object.entries(groups);
+                  const SCALE = 1.2;
 
-                  const startMin = timeToMinutes(a.start_time || shift.start_time, 480) - GRID_START * 60;
-                  let endMin = timeToMinutes(a.end_time || shift.end_time, 960) - GRID_START * 60;
-                  if (endMin <= startMin) endMin = startMin + 480;
+                  return shiftGroups.map(([shiftId, members_list], gIdx) => {
+                    const shift = shiftMap[Number(shiftId)];
+                    if (!shift) return null;
 
-                  const topRem = (startMin / 60) * ROW_HEIGHT * 1.2;
-                  const heightRem = Math.max(((endMin - startMin) / 60) * ROW_HEIGHT * 1.2, ROW_HEIGHT);
+                    const startMin = timeToMinutes(shift.start_time, 480) - GRID_START * 60;
+                    let endMin = timeToMinutes(shift.end_time, 960) - GRID_START * 60;
+                    if (endMin <= startMin) endMin = startMin + 480;
 
-                  const total = dayAssignments.length;
-                  const width = total > 1 ? `${Math.floor(100 / Math.min(total, 3))}%` : "100%";
-                  const left = total > 1 ? `${(idx % Math.min(total, 3)) * Math.floor(100 / Math.min(total, 3))}%` : "0";
+                    const topRem = (startMin / 60) * ROW_HEIGHT * SCALE;
+                    const minHeight = ROW_HEIGHT * 1.5;
+                    const contentHeight = 2.5 + members_list.length * 1.6;
+                    const timeHeight = ((endMin - startMin) / 60) * ROW_HEIGHT * SCALE;
+                    const heightRem = Math.max(timeHeight, minHeight, contentHeight);
 
-                  return (
-                    <div
-                      key={a.id}
-                      onClick={() => onDayClick(currentDayStr)}
-                      className="absolute rounded-xl px-4 py-3 cursor-pointer hover:brightness-95 transition-all"
-                      style={{
-                        top: `${topRem}rem`,
-                        height: `${heightRem}rem`,
-                        left,
-                        width,
-                        backgroundColor: shift.color + "18",
-                        borderLeft: `4px solid ${shift.color}`,
-                      }}
-                    >
-                      <p className="text-sm font-semibold" style={{ color: shift.color }}>{member.full_name}</p>
-                      <p className="text-xs mt-1 font-medium" style={{ color: shift.color }}>
-                        {shift.name} · {a.start_time || shift.start_time || "—"} - {a.end_time || shift.end_time || "—"}
-                      </p>
-                      {a.is_locked && <span className="text-[10px] mt-1 inline-block opacity-60">🔒 Bloqueado</span>}
-                    </div>
-                  );
-                })}
+                    const totalGroups = shiftGroups.length;
+                    const widthPct = totalGroups > 1 ? Math.floor(100 / totalGroups) - 2 : 100;
+                    const leftPct = totalGroups > 1 ? gIdx * Math.floor(100 / totalGroups) : 0;
+
+                    return (
+                      <div
+                        key={shiftId}
+                        onClick={() => onDayClick(currentDayStr)}
+                        className="absolute rounded-xl px-4 py-3 cursor-pointer hover:brightness-95 transition-all"
+                        style={{
+                          top: `${topRem}rem`,
+                          height: `${heightRem}rem`,
+                          left: `${leftPct}%`,
+                          width: `${widthPct}%`,
+                          backgroundColor: shift.color + "12",
+                          borderLeft: `4px solid ${shift.color}`,
+                        }}
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-md text-white" style={{ backgroundColor: shift.color }}>{shift.code}</span>
+                          <span className="text-sm font-semibold" style={{ color: shift.color }}>{shift.name}</span>
+                          <span className="text-xs opacity-60" style={{ color: shift.color }}>
+                            {shift.start_time || "—"} - {shift.end_time || "—"}
+                          </span>
+                        </div>
+                        <div className="space-y-1">
+                          {members_list.map((a) => {
+                            const m = memberMap[a.member_id];
+                            if (!m) return null;
+                            return (
+                              <div key={a.id} className="flex items-center gap-2">
+                                <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold shrink-0" style={{ backgroundColor: m.color_tag }}>
+                                  {m.full_name.charAt(0)}
+                                </div>
+                                <span className="text-sm text-text-primary">{m.full_name}</span>
+                                {a.is_locked && <span className="text-[10px] text-text-tertiary">🔒</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </div>
           </div>
@@ -511,48 +541,70 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
               ))}
             </div>
 
-            {/* Assignment blocks */}
+            {/* Assignment blocks — grouped by shift type */}
             <div className="absolute inset-0" style={{ display: "grid", gridTemplateColumns: "50px repeat(7, 1fr)" }}>
               <div />
               {weekDates.map((date) => {
-                const dayAssignments = assignmentsByDate[date] || [];
+                const dayAsgn = assignmentsByDate[date] || [];
+                // Group by shift type
+                const groups: Record<number, Assignment[]> = {};
+                dayAsgn.forEach((a) => {
+                  if (!groups[a.shift_type_id]) groups[a.shift_type_id] = [];
+                  groups[a.shift_type_id].push(a);
+                });
+                const shiftGroups = Object.entries(groups);
+
                 return (
                   <div key={date} className="relative">
-                    {dayAssignments.map((a, idx) => {
-                      const shift = shiftMap[a.shift_type_id];
-                      const member = memberMap[a.member_id];
-                      if (!shift || !member) return null;
+                    {shiftGroups.map(([shiftId, members_list], gIdx) => {
+                      const shift = shiftMap[Number(shiftId)];
+                      if (!shift) return null;
 
-                      const startMin = timeToMinutes(a.start_time || shift.start_time, 480) - GRID_START * 60;
-                      let endMin = timeToMinutes(a.end_time || shift.end_time, 960) - GRID_START * 60;
+                      const startMin = timeToMinutes(shift.start_time, 480) - GRID_START * 60;
+                      let endMin = timeToMinutes(shift.end_time, 960) - GRID_START * 60;
                       if (endMin <= startMin) endMin = startMin + 480;
 
                       const topRem = (startMin / 60) * ROW_HEIGHT;
-                      const heightRem = Math.max(((endMin - startMin) / 60) * ROW_HEIGHT, ROW_HEIGHT * 0.6);
+                      const minHeight = ROW_HEIGHT * 0.8;
+                      const contentHeight = 1.2 + members_list.length * 0.95;
+                      const timeHeight = ((endMin - startMin) / 60) * ROW_HEIGHT;
+                      const heightRem = Math.max(timeHeight, minHeight, contentHeight);
 
-                      // Slight horizontal offset for overlapping assignments
-                      const total = dayAssignments.length;
-                      const leftPct = total > 1 ? (idx / total) * 30 : 0;
-                      const widthPct = total > 1 ? 100 - (total - 1) * 8 : 100;
+                      // Side by side if multiple shift groups
+                      const totalGroups = shiftGroups.length;
+                      const widthPct = totalGroups > 1 ? Math.floor(100 / totalGroups) - 2 : 94;
+                      const leftPct = totalGroups > 1 ? gIdx * Math.floor(100 / totalGroups) + 3 : 3;
 
                       return (
                         <div
-                          key={a.id}
+                          key={shiftId}
                           onClick={(e) => { e.stopPropagation(); onDayClick(date); }}
                           className="absolute rounded-lg px-2 py-1.5 overflow-hidden cursor-pointer hover:brightness-95 transition-all"
                           style={{
                             top: `${topRem}rem`,
                             height: `${heightRem}rem`,
-                            left: `${leftPct + 3}%`,
-                            width: `${widthPct - 6}%`,
-                            backgroundColor: shift.color + "20",
+                            left: `${leftPct}%`,
+                            width: `${widthPct}%`,
+                            backgroundColor: shift.color + "15",
                             borderLeft: `3px solid ${shift.color}`,
                           }}
                         >
-                          <p className="text-[11px] font-semibold truncate" style={{ color: shift.color }}>{member.full_name}</p>
-                          <p className="text-[9px] mt-0.5 opacity-70" style={{ color: shift.color }}>
-                            {a.start_time || shift.start_time || "—"} - {a.end_time || shift.end_time || "—"}
+                          <p className="text-[10px] font-bold" style={{ color: shift.color }}>
+                            {shift.code} · {shift.start_time || "—"}-{shift.end_time || "—"}
                           </p>
+                          <div className="mt-0.5 space-y-[1px]">
+                            {members_list.map((a) => {
+                              const m = memberMap[a.member_id];
+                              if (!m) return null;
+                              return (
+                                <div key={a.id} className="flex items-center gap-1">
+                                  <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: m.color_tag }} />
+                                  <span className="text-[10px] truncate text-text-primary">{m.full_name}</span>
+                                  {a.is_locked && <span className="text-[8px]">🔒</span>}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       );
                     })}
