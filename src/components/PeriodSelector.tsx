@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import Select from "@/components/ui/Select";
 import { usePeriods, useCreatePeriod } from "@/api/schedule";
+import { useToast } from "@/components/ui/ToastProvider";
 import type { SchedulePeriod } from "@/types/schedule";
 
 const MONTH_NAMES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
@@ -18,6 +19,7 @@ function daysInMonth(year: number, month: number) {
 export default function PeriodSelector({ selected, onSelect }: Props) {
   const { data: periods } = usePeriods();
   const createPeriod = useCreatePeriod();
+  const { toast } = useToast();
   const [showNew, setShowNew] = useState(false);
 
   const now = new Date();
@@ -25,13 +27,23 @@ export default function PeriodSelector({ selected, onSelect }: Props) {
   const [newMonth, setNewMonth] = useState(now.getMonth() + 1);
 
   const handleCreate = () => {
+    // Check if active period exists for this month
+    const existing = periods?.find((p) => p.year === newYear && p.month === newMonth && p.status === "active");
+    if (existing) {
+      toast(`Ya existe un periodo activo para ${MONTH_NAMES[newMonth - 1]} ${newYear}. Eliminalo primero.`, "error");
+      return;
+    }
+
     const days = daysInMonth(newYear, newMonth);
     const start = `${newYear}-${String(newMonth).padStart(2, "0")}-01`;
     const end = `${newYear}-${String(newMonth).padStart(2, "0")}-${String(days).padStart(2, "0")}`;
     const name = `${MONTH_NAMES[newMonth - 1]} ${newYear}`;
     createPeriod.mutate(
       { name, year: newYear, month: newMonth, start_date: start, end_date: end },
-      { onSuccess: (period) => { onSelect(period); setShowNew(false); } },
+      {
+        onSuccess: (period) => { onSelect(period); setShowNew(false); },
+        onError: (err) => { toast(err instanceof Error ? err.message : "Error al crear periodo", "error"); },
+      },
     );
   };
 

@@ -15,6 +15,7 @@ interface Props {
   isActive: boolean;
   onDayClick: (date: string) => void;
   selectedDay: string | null;
+  view?: "week" | "day";
 }
 
 function getMondayOfWeek(date: Date): Date {
@@ -48,7 +49,9 @@ function timeToMinutes(timeStr: string | null, fallback: number): number {
   return h * 60 + m;
 }
 
-export default function ScheduleCalendar({ periodId, startDate, endDate, isActive, onDayClick, selectedDay }: Props) {
+const DAY_NAMES_FULL = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
+
+export default function ScheduleCalendar({ periodId, startDate, endDate, isActive, onDayClick, selectedDay, view = "week" }: Props) {
   const { data: members } = useMembers();
   const { data: shiftTypes } = useShiftTypes();
   const { data: assignments } = useAssignments(periodId);
@@ -56,6 +59,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
   const periodStart = new Date(startDate + "T00:00:00");
   const periodEnd = new Date(endDate + "T00:00:00");
   const [currentWeekStart, setCurrentWeekStart] = useState(() => getMondayOfWeek(periodStart));
+  const [currentDayStr, setCurrentDayStr] = useState(() => new Date().toISOString().slice(0, 10));
 
   const weekDates = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => {
@@ -147,6 +151,154 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
   const ROW_HEIGHT = 3.5; // rem per hour
   const GRID_START = 6; // 06:00
 
+  // Day navigation
+  const prevDay = () => {
+    const d = new Date(currentDayStr + "T00:00:00");
+    d.setDate(d.getDate() - 1);
+    if (d >= periodStart) setCurrentDayStr(d.toISOString().slice(0, 10));
+  };
+  const nextDay = () => {
+    const d = new Date(currentDayStr + "T00:00:00");
+    d.setDate(d.getDate() + 1);
+    if (d <= periodEnd) setCurrentDayStr(d.toISOString().slice(0, 10));
+  };
+
+  const currentDayDate = new Date(currentDayStr + "T00:00:00");
+  const dayAssignments = assignmentsByDate[currentDayStr] || [];
+
+  // Daily view render
+  if (view === "day") {
+    return (
+      <div className="flex gap-6">
+        {/* Left sidebar (same mini-cal) */}
+        <div className="w-[240px] shrink-0 space-y-5">
+          <div className="bg-surface-card rounded-xl border border-[#F0EDF3] p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-text-primary">{MONTHS_FULL[periodStart.getMonth()]} {periodStart.getFullYear()}</h3>
+              <div className="flex gap-1">
+                <button onClick={prevDay} className="p-1 rounded-md hover:bg-p-lavender-light transition-colors"><ChevronLeft size={14} className="text-p-blue" /></button>
+                <button onClick={nextDay} className="p-1 rounded-md hover:bg-p-lavender-light transition-colors"><ChevronRight size={14} className="text-p-blue" /></button>
+              </div>
+            </div>
+            <div className="grid grid-cols-7 gap-0">
+              {["L", "M", "X", "J", "V", "S", "D"].map((d) => (
+                <div key={d} className="text-[10px] font-medium text-text-tertiary text-center py-1">{d}</div>
+              ))}
+              {miniCalDays.map((d, i) => {
+                const isCurrentDay = d.date === currentDayStr;
+                const isToday = d.date === today;
+                const hasAssignments = (assignmentsByDate[d.date]?.length || 0) > 0;
+                return (
+                  <button key={i} onClick={() => setCurrentDayStr(d.date)}
+                    className={`text-xs py-1.5 rounded-md transition-colors relative ${
+                      !d.inMonth ? "text-text-tertiary/40" :
+                      isCurrentDay ? "bg-p-pink text-text-primary font-bold" :
+                      isToday ? "bg-text-primary text-white font-bold" :
+                      "text-text-primary hover:bg-p-lavender-light"
+                    }`}
+                  >
+                    {d.day}
+                    {hasAssignments && d.inMonth && !isToday && !isCurrentDay && (
+                      <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-p-pink" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Day summary */}
+          <div className="bg-surface-card rounded-xl border border-[#F0EDF3] p-4">
+            <h3 className="text-sm font-bold text-text-primary mb-3">Resumen del dia</h3>
+            <p className="text-xs text-text-tertiary">{dayAssignments.length} asignacion{dayAssignments.length !== 1 ? "es" : ""}</p>
+            {dayAssignments.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {dayAssignments.map((a) => {
+                  const shift = shiftMap[a.shift_type_id];
+                  const member = memberMap[a.member_id];
+                  if (!shift || !member) return null;
+                  return (
+                    <div key={a.id} className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded" style={{ backgroundColor: shift.color }} />
+                      <span className="text-xs text-text-primary truncate">{member.full_name}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Daily time grid */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-3 mb-4">
+            <button onClick={prevDay} className="p-1.5 rounded-lg hover:bg-p-lavender-light transition-colors"><ChevronLeft size={18} className="text-text-secondary" /></button>
+            <button onClick={nextDay} className="p-1.5 rounded-lg hover:bg-p-lavender-light transition-colors"><ChevronRight size={18} className="text-text-secondary" /></button>
+            <h2 className="text-xl font-extrabold text-text-primary tracking-tight">
+              {DAY_NAMES_FULL[currentDayDate.getDay()]}, {currentDayDate.getDate()} de {MONTHS_FULL[currentDayDate.getMonth()]}
+            </h2>
+          </div>
+
+          <div className="bg-surface-card rounded-xl border border-[#F0EDF3] overflow-auto" style={{ maxHeight: "calc(100vh - 280px)" }}>
+            <div className="relative" style={{ height: `${HOURS.length * ROW_HEIGHT * 1.2}rem` }}>
+              {/* Hour lines */}
+              {HOURS.map((hour, i) => (
+                <div key={hour} className="absolute left-0 right-0 border-t border-[#F0EDF3]/60" style={{ top: `${i * ROW_HEIGHT * 1.2}rem` }}>
+                  <div className="w-[60px] text-right pr-3 -mt-2">
+                    <span className="text-xs font-medium text-text-tertiary">{String(hour).padStart(2, "0")}:00</span>
+                  </div>
+                </div>
+              ))}
+
+              {/* Assignment blocks */}
+              <div className="absolute inset-0" style={{ marginLeft: "70px" }}>
+                {dayAssignments.map((a, idx) => {
+                  const shift = shiftMap[a.shift_type_id];
+                  const member = memberMap[a.member_id];
+                  if (!shift || !member) return null;
+
+                  const startMin = timeToMinutes(a.start_time || shift.start_time, 480) - GRID_START * 60;
+                  let endMin = timeToMinutes(a.end_time || shift.end_time, 960) - GRID_START * 60;
+                  if (endMin <= startMin) endMin = startMin + 480;
+
+                  const topRem = (startMin / 60) * ROW_HEIGHT * 1.2;
+                  const heightRem = Math.max(((endMin - startMin) / 60) * ROW_HEIGHT * 1.2, ROW_HEIGHT);
+
+                  const total = dayAssignments.length;
+                  const width = total > 1 ? `${Math.floor(100 / Math.min(total, 3))}%` : "100%";
+                  const left = total > 1 ? `${(idx % Math.min(total, 3)) * Math.floor(100 / Math.min(total, 3))}%` : "0";
+
+                  return (
+                    <div
+                      key={a.id}
+                      onClick={() => onDayClick(currentDayStr)}
+                      className="absolute rounded-xl px-4 py-3 cursor-pointer hover:brightness-95 transition-all"
+                      style={{
+                        top: `${topRem}rem`,
+                        height: `${heightRem}rem`,
+                        left,
+                        width,
+                        backgroundColor: shift.color + "18",
+                        borderLeft: `4px solid ${shift.color}`,
+                      }}
+                    >
+                      <p className="text-sm font-semibold" style={{ color: shift.color }}>{member.full_name}</p>
+                      <p className="text-xs mt-1 font-medium" style={{ color: shift.color }}>
+                        {shift.name} · {a.start_time || shift.start_time || "—"} - {a.end_time || shift.end_time || "—"}
+                      </p>
+                      {a.is_locked && <span className="text-[10px] mt-1 inline-block opacity-60">🔒 Bloqueado</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Weekly view (default)
   return (
     <div className="flex gap-6">
       {/* Left sidebar */}

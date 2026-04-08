@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Calendar, Download, Sparkles, CheckCircle, Trash2, LayoutGrid, CalendarDays, CalendarPlus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Calendar, Download, Sparkles, CheckCircle, Trash2, LayoutGrid, CalendarDays, CalendarClock, CalendarPlus } from "lucide-react";
 import ProfileMenu from "@/components/ProfileMenu";
 import ConfigMenu from "@/components/ConfigMenu";
 import QuickStats from "@/components/QuickStats";
@@ -12,16 +12,25 @@ import ShiftsModal from "@/components/ShiftsModal";
 import GenerateDialog from "@/components/GenerateDialog";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Tooltip from "@/components/ui/Tooltip";
-import { useActivatePeriod, useDeletePeriod, useValidation } from "@/api/schedule";
+import { usePeriods, useActivatePeriod, useDeletePeriod, useValidation } from "@/api/schedule";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { SchedulePeriod } from "@/types/schedule";
 
-type ViewMode = "calendar" | "grid";
+type ViewMode = "week" | "day" | "grid";
 
 export default function DashboardPage() {
+  const { data: periods } = usePeriods();
   const [selectedPeriod, setSelectedPeriod] = useState<SchedulePeriod | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("calendar");
+  const [viewMode, setViewMode] = useState<ViewMode>("week");
+
+  // Auto-select active period on load
+  useEffect(() => {
+    if (periods && !selectedPeriod) {
+      const active = periods.find((p) => p.status === "active");
+      if (active) setSelectedPeriod(active);
+    }
+  }, [periods, selectedPeriod]);
 
   // Modals
   const [showGenerate, setShowGenerate] = useState(false);
@@ -112,9 +121,14 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2">
             {selectedPeriod && (
               <div className="flex items-center gap-0.5 bg-[#F0EDF3]/60 rounded-lg p-0.5 mr-2">
-                <Tooltip content="Calendario">
-                  <button onClick={() => setViewMode("calendar")} className={`p-1.5 rounded-md transition-colors ${viewMode === "calendar" ? "bg-surface-card shadow-xs text-text-primary" : "text-text-tertiary"}`}>
+                <Tooltip content="Semana">
+                  <button onClick={() => setViewMode("week")} className={`p-1.5 rounded-md transition-colors ${viewMode === "week" ? "bg-surface-card shadow-xs text-text-primary" : "text-text-tertiary"}`}>
                     <CalendarDays size={14} />
+                  </button>
+                </Tooltip>
+                <Tooltip content="Dia">
+                  <button onClick={() => setViewMode("day")} className={`p-1.5 rounded-md transition-colors ${viewMode === "day" ? "bg-surface-card shadow-xs text-text-primary" : "text-text-tertiary"}`}>
+                    <CalendarClock size={14} />
                   </button>
                 </Tooltip>
                 <Tooltip content="Tabla">
@@ -144,7 +158,7 @@ export default function DashboardPage() {
 
         {/* Calendar / Grid */}
         {selectedPeriod ? (
-          viewMode === "calendar" ? (
+          viewMode === "week" || viewMode === "day" ? (
             <ScheduleCalendar
               periodId={selectedPeriod.id}
               startDate={selectedPeriod.start_date}
@@ -152,6 +166,7 @@ export default function DashboardPage() {
               isActive={selectedPeriod.status === "active"}
               onDayClick={(date) => setSelectedDay(date)}
               selectedDay={selectedDay}
+              view={viewMode}
             />
           ) : (
             <div className="bg-surface-card rounded-xl border border-[#F0EDF3] overflow-hidden shadow-xs">
