@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
-import Select from "@/components/ui/Select";
+import { Plus, CalendarPlus } from "lucide-react";
+import SelectUI from "@/components/ui/Select";
+import Modal from "@/components/ui/Modal";
 import { usePeriods, useCreatePeriod } from "@/api/schedule";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { SchedulePeriod } from "@/types/schedule";
@@ -10,7 +11,7 @@ const MONTH_NAMES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Se
 interface Props {
   selected: SchedulePeriod | null;
   onSelect: (period: SchedulePeriod) => void;
-  showAll?: boolean; // show all periods (active+draft) instead of just active current year
+  showAll?: boolean;
 }
 
 function daysInMonth(year: number, month: number) {
@@ -21,7 +22,7 @@ export default function PeriodSelector({ selected, onSelect, showAll = false }: 
   const { data: periods } = usePeriods();
   const createPeriod = useCreatePeriod();
   const { toast } = useToast();
-  const [showNew, setShowNew] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const currentYear = new Date().getFullYear();
   const [newMonth, setNewMonth] = useState(new Date().getMonth() + 1);
@@ -51,45 +52,61 @@ export default function PeriodSelector({ selected, onSelect, showAll = false }: 
     createPeriod.mutate(
       { name, year: currentYear, month: newMonth, start_date: start, end_date: end },
       {
-        onSuccess: (period) => { onSelect(period); setShowNew(false); },
+        onSuccess: (period) => { onSelect(period); setShowModal(false); },
         onError: (err) => { toast(err instanceof Error ? err.message : "Error al crear periodo", "error"); },
       },
     );
   };
 
   return (
-    <div className="flex items-center gap-3">
-      <Select
-        value={selected ? String(selected.id) : ""}
-        onValueChange={(val) => {
-          const p = periods?.find((p) => p.id === Number(val));
-          if (p) onSelect(p);
-        }}
-        options={periodOptions}
-        placeholder="Seleccionar periodo activo"
-      />
-
-      {!showNew ? (
-        <button onClick={() => setShowNew(true)} className="btn-secondary text-sm px-3 py-2">
+    <>
+      <div className="flex items-center gap-2">
+        <SelectUI
+          value={selected ? String(selected.id) : ""}
+          onValueChange={(val) => {
+            const p = periods?.find((p) => p.id === Number(val));
+            if (p) onSelect(p);
+          }}
+          options={periodOptions}
+          placeholder="Seleccionar periodo"
+        />
+        <button onClick={() => setShowModal(true)} className="btn-secondary text-sm px-3 py-2 rounded-xl">
           <Plus size={14} /> Nuevo
         </button>
-      ) : (
-        <div className="flex items-center gap-2">
-          <Select
-            value={String(newMonth)}
-            onValueChange={(val) => setNewMonth(Number(val))}
-            options={monthOptions}
-            placeholder="Mes"
-          />
-          <span className="text-sm font-medium text-text-secondary">{currentYear}</span>
-          <button onClick={handleCreate} disabled={createPeriod.isPending} className="btn-primary text-sm px-3 py-2">
-            Crear
-          </button>
-          <button onClick={() => setShowNew(false)} className="text-sm text-text-secondary hover:text-text-primary transition-colors">
-            Cancelar
-          </button>
+      </div>
+
+      <Modal open={showModal} onOpenChange={setShowModal} title="Nuevo horario">
+        <div className="space-y-5">
+          <div className="flex items-center gap-3 p-4 rounded-2xl bg-p-lavender-light/40 border border-p-lavender/30">
+            <CalendarPlus size={20} className="text-text-tertiary shrink-0" />
+            <p className="text-sm text-text-secondary">Selecciona el mes para crear un nuevo periodo de horarios.</p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Mes</label>
+            <SelectUI
+              value={String(newMonth)}
+              onValueChange={(val) => setNewMonth(Number(val))}
+              options={monthOptions}
+              placeholder="Seleccionar mes"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Año</label>
+            <div className="input-pastel flex items-center justify-center text-sm font-medium text-text-primary">{currentYear}</div>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button onClick={handleCreate} disabled={createPeriod.isPending} className="btn-primary flex-1 rounded-xl">
+              {createPeriod.isPending ? "Creando..." : "Crear horario"}
+            </button>
+            <button onClick={() => setShowModal(false)} className="btn-secondary flex-1 rounded-xl">
+              Cancelar
+            </button>
+          </div>
         </div>
-      )}
-    </div>
+      </Modal>
+    </>
   );
 }
