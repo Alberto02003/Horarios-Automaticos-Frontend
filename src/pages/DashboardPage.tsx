@@ -10,6 +10,8 @@ import DayDetailPanel from "@/components/DayDetailPanel";
 import TeamModal from "@/components/TeamModal";
 import ShiftsModal from "@/components/ShiftsModal";
 import GenerateDialog from "@/components/GenerateDialog";
+import DraftsSection from "@/components/DraftsSection";
+import HistorySection from "@/components/HistorySection";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Tooltip from "@/components/ui/Tooltip";
 import { usePeriods, useActivatePeriod, useDeletePeriod, useValidation } from "@/api/schedule";
@@ -187,6 +189,12 @@ export default function DashboardPage() {
             <p className="text-sm text-text-secondary mt-1">Los horarios se organizan por mes</p>
           </div>
         )}
+
+        {/* Drafts + History sections */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
+          <DraftsSection onLoadDraft={(p) => setSelectedPeriod(p)} />
+          <HistorySection onSelectPeriod={(p) => setSelectedPeriod(p)} />
+        </div>
       </div>
 
       {/* Modals */}
