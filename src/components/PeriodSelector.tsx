@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import Select from "@/components/ui/Select";
 import { usePeriods, useCreatePeriod } from "@/api/schedule";
 import type { SchedulePeriod } from "@/types/schedule";
 
@@ -34,23 +35,24 @@ export default function PeriodSelector({ selected, onSelect }: Props) {
     );
   };
 
+  const periodOptions = (periods || []).map((p) => ({
+    value: String(p.id),
+    label: `${p.name}${p.status === "active" ? " ✓" : " (borrador)"}`,
+  }));
+
+  const monthOptions = MONTH_NAMES.map((m, i) => ({ value: String(i + 1), label: m }));
+
   return (
     <div className="flex items-center gap-3">
-      <select
-        value={selected?.id ?? ""}
-        onChange={(e) => {
-          const p = periods?.find((p) => p.id === Number(e.target.value));
+      <Select
+        value={selected ? String(selected.id) : ""}
+        onValueChange={(val) => {
+          const p = periods?.find((p) => p.id === Number(val));
           if (p) onSelect(p);
         }}
-        className="input-pastel w-auto min-w-[200px]"
-      >
-        <option value="">Seleccionar periodo</option>
-        {periods?.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name} {p.status === "active" ? " ✓" : " (borrador)"}
-          </option>
-        ))}
-      </select>
+        options={periodOptions}
+        placeholder="Seleccionar periodo"
+      />
 
       {!showNew ? (
         <button onClick={() => setShowNew(true)} className="btn-secondary text-sm px-3 py-2">
@@ -58,9 +60,12 @@ export default function PeriodSelector({ selected, onSelect }: Props) {
         </button>
       ) : (
         <div className="flex items-center gap-2">
-          <select value={newMonth} onChange={(e) => setNewMonth(Number(e.target.value))} className="input-pastel w-auto">
-            {MONTH_NAMES.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
-          </select>
+          <Select
+            value={String(newMonth)}
+            onValueChange={(val) => setNewMonth(Number(val))}
+            options={monthOptions}
+            placeholder="Mes"
+          />
           <input type="number" value={newYear} onChange={(e) => setNewYear(Number(e.target.value))} className="input-pastel w-20" />
           <button onClick={handleCreate} disabled={createPeriod.isPending} className="btn-primary text-sm px-3 py-2">
             Crear

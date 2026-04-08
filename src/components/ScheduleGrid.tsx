@@ -1,9 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
+import * as RadixPopover from "@radix-ui/react-popover";
 import { Lock, Unlock } from "lucide-react";
 import { useMembers } from "@/api/members";
 import { useShiftTypes } from "@/api/shiftTypes";
 import { useAssignments, useCreateAssignment, useDeleteAssignment, useToggleLock } from "@/api/schedule";
 import ShiftSelector from "./ShiftSelector";
+import Tooltip from "@/components/ui/Tooltip";
 import type { Assignment } from "@/types/schedule";
 
 const DAY_NAMES = ["D", "L", "M", "X", "J", "V", "S"];
@@ -23,7 +25,8 @@ export default function ScheduleGrid({ periodId, startDate, endDate, isActive }:
   const deleteAssignment = useDeleteAssignment(periodId);
   const toggleLock = useToggleLock(periodId);
 
-  const [selectorPos, setSelectorPos] = useState<{ memberId: number; date: string; x: number; y: number } | null>(null);
+  const [openCell, setOpenCell] = useState<string | null>(null); // "memberId-date"
+  const cellRefs = useRef<Record<string, HTMLTableCellElement | null>>({});
 
   const dates = useMemo(() => {
     const result: string[] = [];
@@ -49,24 +52,16 @@ export default function ScheduleGrid({ periodId, startDate, endDate, isActive }:
     return map;
   }, [assignments]);
 
-  const handleCellClick = (memberId: number, date: string, e: React.MouseEvent) => {
-    if (isActive) return;
-    const rect = (e.target as HTMLElement).getBoundingClientRect();
-    setSelectorPos({ memberId, date, x: rect.left, y: rect.bottom });
+  const handleSelect = (memberId: number, date: string, shiftTypeId: number) => {
+    createAssignment.mutate({ member_id: memberId, date, shift_type_id: shiftTypeId });
+    setOpenCell(null);
   };
 
-  const handleSelect = (shiftTypeId: number) => {
-    if (!selectorPos) return;
-    createAssignment.mutate({ member_id: selectorPos.memberId, date: selectorPos.date, shift_type_id: shiftTypeId });
-    setSelectorPos(null);
-  };
-
-  const handleRemove = () => {
-    if (!selectorPos) return;
-    const key = `${selectorPos.memberId}-${selectorPos.date}`;
+  const handleRemove = (memberId: number, date: string) => {
+    const key = `${memberId}-${date}`;
     const assignment = assignmentMap[key];
     if (assignment) deleteAssignment.mutate(assignment.id);
-    setSelectorPos(null);
+    setOpenCell(null);
   };
 
   const handleLockToggle = (assignment: Assignment, e: React.MouseEvent) => {
@@ -101,12 +96,7 @@ export default function ScheduleGrid({ periodId, startDate, endDate, isActive }:
                 const dayOfWeek = new Date(d + "T00:00:00").getDay();
                 const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
                 return (
-                  <th
-                    key={d}
-                    className={`px-1 py-1.5 text-center font-medium border-b border-pastel-pink/20 min-w-[38px] ${
-                      isWeekend ? "bg-pastel-lavender-light/60 text-purple-400" : "bg-pastel-pink-light text-warm-secondary"
-                    }`}
-                  >
+                  <th key={d} className={`px-1 py-1.5 text-center font-medium border-b border-pastel-pink/20 min-w-[38px] ${isWeekend ? "bg-pastel-lavender-light/60 text-purple-400" : "bg-pastel-pink-light text-warm-secondary"}`}>
                     <div className="text-[10px]">{DAY_NAMES[dayOfWeek]}</div>
                     <div>{parseInt(d.slice(8))}</div>
                   </th>
@@ -138,36 +128,62 @@ export default function ScheduleGrid({ periodId, startDate, endDate, isActive }:
                   const st = assignment ? stMap[assignment.shift_type_id] : null;
                   const dayOfWeek = new Date(d + "T00:00:00").getDay();
                   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                  const isOpen = openCell === key;
 
                   return (
                     <td
                       key={d}
-                      onClick={(e) => handleCellClick(member.id, d, e)}
+                      ref={(el) => { cellRefs.current[key] = el; }}
                       className={`px-0.5 py-0.5 border-b border-pastel-pink/10 text-center transition-colors ${
                         isWeekend ? "bg-pastel-lavender-light/30" : ""
                       } ${!isActive ? "cursor-pointer hover:bg-pastel-pink/20" : ""}`}
                     >
-                      {st ? (
-                        <div
-                          className="relative rounded-lg px-1 py-1 text-white font-bold text-[10px] leading-tight shadow-sm"
-                          style={{ backgroundColor: st.color }}
-                          title={st.name}
-                        >
-                          {st.code}
-                          {assignment.is_locked && (
-                            <button onClick={(e) => handleLockToggle(assignment, e)} className="absolute -top-1.5 -right-1.5 bg-white rounded-full p-0.5 shadow-sm" title="Bloqueado">
-                              <Lock size={8} className="text-warm-secondary" />
-                            </button>
-                          )}
-                          {!assignment.is_locked && !isActive && (
-                            <button onClick={(e) => handleLockToggle(assignment, e)} className="absolute -top-1.5 -right-1.5 bg-white rounded-full p-0.5 shadow-sm opacity-0 hover:opacity-100 transition-opacity" title="Bloquear">
-                              <Unlock size={8} className="text-warm-secondary" />
-                            </button>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="h-6" />
-                      )}
+                      <RadixPopover.Root open={isOpen} onOpenChange={(open) => { if (!isActive) setOpenCell(open ? key : null); }}>
+                        <RadixPopover.Trigger asChild>
+                          <div className="w-full h-full min-h-[24px]">
+                            {st ? (
+                              <div
+                                className="relative rounded-lg px-1 py-1 text-white font-bold text-[10px] leading-tight shadow-sm"
+                                style={{ backgroundColor: st.color }}
+                                title={st.name}
+                              >
+                                {st.code}
+                                {assignment.is_locked && (
+                                  <Tooltip content="Bloqueado — click para desbloquear">
+                                    <button onClick={(e) => handleLockToggle(assignment, e)} className="absolute -top-1.5 -right-1.5 bg-white rounded-full p-0.5 shadow-sm">
+                                      <Lock size={8} className="text-warm-secondary" />
+                                    </button>
+                                  </Tooltip>
+                                )}
+                                {!assignment.is_locked && !isActive && (
+                                  <Tooltip content="Bloquear asignacion">
+                                    <button onClick={(e) => handleLockToggle(assignment, e)} className="absolute -top-1.5 -right-1.5 bg-white rounded-full p-0.5 shadow-sm opacity-0 hover:opacity-100 transition-opacity">
+                                      <Unlock size={8} className="text-warm-secondary" />
+                                    </button>
+                                  </Tooltip>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="h-6" />
+                            )}
+                          </div>
+                        </RadixPopover.Trigger>
+                        <RadixPopover.Portal>
+                          <RadixPopover.Content
+                            side="bottom"
+                            align="start"
+                            sideOffset={4}
+                            collisionPadding={8}
+                            className="z-50 glass-card rounded-2xl shadow-elevated p-2.5 min-w-[180px] animate-scale-in focus:outline-none"
+                          >
+                            <ShiftSelector
+                              onSelect={(shiftTypeId) => handleSelect(member.id, d, shiftTypeId)}
+                              onRemove={assignment ? () => handleRemove(member.id, d) : undefined}
+                              onClose={() => setOpenCell(null)}
+                            />
+                          </RadixPopover.Content>
+                        </RadixPopover.Portal>
+                      </RadixPopover.Root>
                     </td>
                   );
                 })}
@@ -176,19 +192,6 @@ export default function ScheduleGrid({ periodId, startDate, endDate, isActive }:
           </tbody>
         </table>
       </div>
-
-      {selectorPos && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setSelectorPos(null)} />
-          <div className="fixed z-50" style={{ left: selectorPos.x, top: selectorPos.y }}>
-            <ShiftSelector
-              onSelect={handleSelect}
-              onRemove={assignmentMap[`${selectorPos.memberId}-${selectorPos.date}`] ? handleRemove : undefined}
-              onClose={() => setSelectorPos(null)}
-            />
-          </div>
-        </>
-      )}
     </div>
   );
 }

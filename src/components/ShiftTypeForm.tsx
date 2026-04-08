@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import Select from "@/components/ui/Select";
 import type { ShiftType, ShiftTypeCreate } from "@/types/shift";
 
 const CATEGORY_OPTIONS = [
@@ -68,9 +69,7 @@ export default function ShiftTypeForm({ shiftType, onSubmit, onCancel, loading }
       </div>
       <div>
         <label className="block text-sm font-medium text-warm-secondary mb-1.5">Categoria</label>
-        <select value={category} onChange={(e) => setCategory(e.target.value)} className="input-pastel">
-          {CATEGORY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
+        <Select value={category} onValueChange={setCategory} options={CATEGORY_OPTIONS} placeholder="Seleccionar categoria" />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>

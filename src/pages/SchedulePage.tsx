@@ -3,15 +3,18 @@ import { Calendar, Download, Sparkles, CheckCircle, AlertTriangle, Clock, Calend
 import PeriodSelector from "@/components/PeriodSelector";
 import ScheduleGrid from "@/components/ScheduleGrid";
 import GenerateDialog from "@/components/GenerateDialog";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { useActivatePeriod, useValidation } from "@/api/schedule";
-import { showToast } from "@/components/Toast";
+import { useToast } from "@/components/ui/ToastProvider";
 import type { SchedulePeriod } from "@/types/schedule";
 
 export default function SchedulePage() {
   const [selectedPeriod, setSelectedPeriod] = useState<SchedulePeriod | null>(null);
   const [showGenerate, setShowGenerate] = useState(false);
+  const [showActivateConfirm, setShowActivateConfirm] = useState(false);
   const activatePeriod = useActivatePeriod();
   const { data: warnings } = useValidation(selectedPeriod?.id ?? null);
+  const { toast } = useToast();
 
   const handleExportExcel = async () => {
     if (!selectedPeriod) return;
@@ -29,17 +32,20 @@ export default function SchedulePage() {
       a.download = `horarios_${selectedPeriod.name.replace(/ /g, "_")}.xlsx`;
       a.click();
       URL.revokeObjectURL(url);
-      showToast("Excel exportado", "success");
+      toast("Excel exportado", "success");
     } catch {
-      showToast("Error al exportar Excel", "error");
+      toast("Error al exportar Excel", "error");
     }
   };
 
   const handleActivate = () => {
-    if (!selectedPeriod || selectedPeriod.status === "active") return;
-    if (!confirm("Activar este periodo? No se podran editar las asignaciones despues.")) return;
+    if (!selectedPeriod) return;
     activatePeriod.mutate(selectedPeriod.id, {
-      onSuccess: (updated) => setSelectedPeriod(updated),
+      onSuccess: (updated) => {
+        setSelectedPeriod(updated);
+        setShowActivateConfirm(false);
+        toast("Periodo activado", "success");
+      },
     });
   };
 
@@ -74,7 +80,7 @@ export default function SchedulePage() {
                 <button onClick={() => setShowGenerate(true)} className="btn-primary text-sm px-3 py-2" style={{ background: "linear-gradient(135deg, #c4b5fd, #e8d5f5)" }}>
                   <Sparkles size={14} /> Generar
                 </button>
-                <button onClick={handleActivate} disabled={activatePeriod.isPending} className="btn-primary text-sm px-3 py-2" style={{ background: "linear-gradient(135deg, #86efac, #c5eadb)" }}>
+                <button onClick={() => setShowActivateConfirm(true)} disabled={activatePeriod.isPending} className="btn-primary text-sm px-3 py-2" style={{ background: "linear-gradient(135deg, #86efac, #c5eadb)" }}>
                   <CheckCircle size={14} /> Activar
                 </button>
               </>
@@ -99,9 +105,21 @@ export default function SchedulePage() {
         </div>
       )}
 
-      {showGenerate && selectedPeriod && (
-        <GenerateDialog periodId={selectedPeriod.id} onClose={() => setShowGenerate(false)} />
-      )}
+      <GenerateDialog
+        periodId={selectedPeriod?.id ?? 0}
+        open={showGenerate && !!selectedPeriod}
+        onOpenChange={setShowGenerate}
+      />
+
+      <ConfirmDialog
+        open={showActivateConfirm}
+        onOpenChange={setShowActivateConfirm}
+        title="Activar periodo"
+        description="Una vez activado, no se podran editar las asignaciones. Esta accion no se puede deshacer."
+        onConfirm={handleActivate}
+        confirmLabel="Activar"
+        variant="warning"
+      />
 
       {selectedPeriod ? (
         <div className="glass-card rounded-2xl shadow-soft overflow-hidden">

@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Clock, Plus, Pencil, X } from "lucide-react";
 import { useShiftTypes, useCreateShiftType, useUpdateShiftType, useDeleteShiftType } from "@/api/shiftTypes";
+import Modal from "@/components/ui/Modal";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import Tooltip from "@/components/ui/Tooltip";
 import ShiftTypeForm from "@/components/ShiftTypeForm";
 import type { ShiftType, ShiftTypeCreate } from "@/types/shift";
 
@@ -14,16 +17,19 @@ export default function ShiftTypesPage() {
 
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<ShiftType | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<ShiftType | null>(null);
 
   const handleCreate = (data: ShiftTypeCreate) => { createST.mutate(data, { onSuccess: () => setShowForm(false) }); };
   const handleUpdate = (data: ShiftTypeCreate) => {
     if (!editing) return;
     updateST.mutate({ id: editing.id, data }, { onSuccess: () => { setEditing(null); setShowForm(false); } });
   };
-  const handleDelete = (st: ShiftType) => { if (confirm(`Desactivar turno "${st.name}"?`)) deleteST.mutate(st.id); };
+  const handleDelete = () => {
+    if (!confirmDelete) return;
+    deleteST.mutate(confirmDelete.id, { onSuccess: () => setConfirmDelete(null) });
+  };
   const openCreate = () => { setEditing(null); setShowForm(true); };
   const openEdit = (st: ShiftType) => { setEditing(st); setShowForm(true); };
-  const closeForm = () => { setEditing(null); setShowForm(false); };
 
   return (
     <div className="p-6">
@@ -42,21 +48,24 @@ export default function ShiftTypesPage() {
         </button>
       </div>
 
-      {showForm && (
-        <div className="fixed inset-0 bg-pastel-pink-deep/20 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
-          <div className="glass-card rounded-3xl p-8 w-full max-w-md shadow-elevated animate-scale-in">
-            <h3 className="text-lg font-bold text-warm-dark mb-5">
-              {editing ? "Editar turno" : "Nuevo turno"}
-            </h3>
-            <ShiftTypeForm
-              shiftType={editing}
-              onSubmit={editing ? handleUpdate : handleCreate}
-              onCancel={closeForm}
-              loading={createST.isPending || updateST.isPending}
-            />
-          </div>
-        </div>
-      )}
+      <Modal open={showForm} onOpenChange={setShowForm} title={editing ? "Editar turno" : "Nuevo turno"}>
+        <ShiftTypeForm
+          shiftType={editing}
+          onSubmit={editing ? handleUpdate : handleCreate}
+          onCancel={() => setShowForm(false)}
+          loading={createST.isPending || updateST.isPending}
+        />
+      </Modal>
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        onOpenChange={(open) => { if (!open) setConfirmDelete(null); }}
+        title="Desactivar turno"
+        description={`Se desactivara el turno "${confirmDelete?.name}". Podras reactivarlo mas tarde.`}
+        onConfirm={handleDelete}
+        confirmLabel="Desactivar"
+        variant="warning"
+      />
 
       {isLoading ? (
         <div className="text-warm-secondary text-sm">Cargando...</div>
@@ -94,13 +103,17 @@ export default function ShiftTypesPage() {
                   )}
                 </div>
                 <div className="flex gap-1">
-                  <button onClick={() => openEdit(st)} className="p-1.5 rounded-lg text-warm-secondary hover:bg-pastel-pink-light hover:text-pastel-pink-deep transition-colors">
-                    <Pencil size={14} />
-                  </button>
-                  {st.is_active && (
-                    <button onClick={() => handleDelete(st)} className="p-1.5 rounded-lg text-warm-secondary hover:bg-red-50 hover:text-red-400 transition-colors">
-                      <X size={14} />
+                  <Tooltip content="Editar">
+                    <button onClick={() => openEdit(st)} className="p-1.5 rounded-lg text-warm-secondary hover:bg-pastel-pink-light hover:text-pastel-pink-deep transition-colors">
+                      <Pencil size={14} />
                     </button>
+                  </Tooltip>
+                  {st.is_active && (
+                    <Tooltip content="Desactivar">
+                      <button onClick={() => setConfirmDelete(st)} className="p-1.5 rounded-lg text-warm-secondary hover:bg-red-50 hover:text-red-400 transition-colors">
+                        <X size={14} />
+                      </button>
+                    </Tooltip>
                   )}
                 </div>
               </div>

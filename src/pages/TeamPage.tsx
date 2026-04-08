@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Users, Plus, Pencil, UserX } from "lucide-react";
 import { useMembers, useCreateMember, useUpdateMember, useDeleteMember } from "@/api/members";
+import Modal from "@/components/ui/Modal";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import Tooltip from "@/components/ui/Tooltip";
 import MemberForm from "@/components/MemberForm";
 import type { Member, MemberCreate } from "@/types/member";
 
@@ -12,6 +15,7 @@ export default function TeamPage() {
 
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Member | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Member | null>(null);
 
   const handleCreate = (data: MemberCreate) => {
     createMember.mutate(data, { onSuccess: () => setShowForm(false) });
@@ -22,14 +26,13 @@ export default function TeamPage() {
     updateMember.mutate({ id: editing.id, data }, { onSuccess: () => { setEditing(null); setShowForm(false); } });
   };
 
-  const handleDelete = (member: Member) => {
-    if (!confirm(`Desactivar a ${member.full_name}?`)) return;
-    deleteMember.mutate(member.id);
+  const handleDelete = () => {
+    if (!confirmDelete) return;
+    deleteMember.mutate(confirmDelete.id, { onSuccess: () => setConfirmDelete(null) });
   };
 
   const openCreate = () => { setEditing(null); setShowForm(true); };
   const openEdit = (member: Member) => { setEditing(member); setShowForm(true); };
-  const closeForm = () => { setEditing(null); setShowForm(false); };
 
   return (
     <div className="p-6">
@@ -48,24 +51,25 @@ export default function TeamPage() {
         </button>
       </div>
 
-      {/* Modal */}
-      {showForm && (
-        <div className="fixed inset-0 bg-pastel-pink-deep/20 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
-          <div className="glass-card rounded-3xl p-8 w-full max-w-md shadow-elevated animate-scale-in">
-            <h3 className="text-lg font-bold text-warm-dark mb-5">
-              {editing ? "Editar miembro" : "Nuevo miembro"}
-            </h3>
-            <MemberForm
-              member={editing}
-              onSubmit={editing ? handleUpdate : handleCreate}
-              onCancel={closeForm}
-              loading={createMember.isPending || updateMember.isPending}
-            />
-          </div>
-        </div>
-      )}
+      <Modal open={showForm} onOpenChange={setShowForm} title={editing ? "Editar miembro" : "Nuevo miembro"}>
+        <MemberForm
+          member={editing}
+          onSubmit={editing ? handleUpdate : handleCreate}
+          onCancel={() => setShowForm(false)}
+          loading={createMember.isPending || updateMember.isPending}
+        />
+      </Modal>
 
-      {/* Cards */}
+      <ConfirmDialog
+        open={!!confirmDelete}
+        onOpenChange={(open) => { if (!open) setConfirmDelete(null); }}
+        title="Desactivar miembro"
+        description={`Se desactivara a ${confirmDelete?.full_name}. Podras reactivarlo mas tarde.`}
+        onConfirm={handleDelete}
+        confirmLabel="Desactivar"
+        variant="warning"
+      />
+
       {isLoading ? (
         <div className="text-warm-secondary text-sm">Cargando...</div>
       ) : !members?.length ? (
@@ -79,10 +83,7 @@ export default function TeamPage() {
           {members.map((m) => (
             <div key={m.id} className="glass-card rounded-[--radius-card] p-5 shadow-soft hover:shadow-card transition-all duration-200 hover:-translate-y-0.5">
               <div className="flex items-center gap-3 mb-3">
-                <div
-                  className="w-10 h-10 rounded-full ring-2 ring-white shadow-sm"
-                  style={{ backgroundColor: m.color_tag }}
-                />
+                <div className="w-10 h-10 rounded-full ring-2 ring-white shadow-sm" style={{ backgroundColor: m.color_tag }} />
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-warm-dark truncate">{m.full_name}</p>
                   <span className="inline-block text-xs font-medium bg-pastel-lavender-light text-warm-secondary rounded-full px-2.5 py-0.5 mt-0.5">
@@ -96,19 +97,17 @@ export default function TeamPage() {
                   <span className={`w-2 h-2 rounded-full ${m.is_active ? "bg-pastel-mint" : "bg-gray-300"}`} />
                 </div>
                 <div className="flex gap-1">
-                  <button
-                    onClick={() => openEdit(m)}
-                    className="p-1.5 rounded-lg text-warm-secondary hover:bg-pastel-pink-light hover:text-pastel-pink-deep transition-colors"
-                  >
-                    <Pencil size={14} />
-                  </button>
-                  {m.is_active && (
-                    <button
-                      onClick={() => handleDelete(m)}
-                      className="p-1.5 rounded-lg text-warm-secondary hover:bg-red-50 hover:text-red-400 transition-colors"
-                    >
-                      <UserX size={14} />
+                  <Tooltip content="Editar">
+                    <button onClick={() => openEdit(m)} className="p-1.5 rounded-lg text-warm-secondary hover:bg-pastel-pink-light hover:text-pastel-pink-deep transition-colors">
+                      <Pencil size={14} />
                     </button>
+                  </Tooltip>
+                  {m.is_active && (
+                    <Tooltip content="Desactivar">
+                      <button onClick={() => setConfirmDelete(m)} className="p-1.5 rounded-lg text-warm-secondary hover:bg-red-50 hover:text-red-400 transition-colors">
+                        <UserX size={14} />
+                      </button>
+                    </Tooltip>
                   )}
                 </div>
               </div>
