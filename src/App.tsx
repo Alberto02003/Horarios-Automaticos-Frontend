@@ -8,11 +8,13 @@ import SchedulePage from "@/pages/SchedulePage";
 import TeamPage from "@/pages/TeamPage";
 import ShiftTypesPage from "@/pages/ShiftTypesPage";
 import ConfigPage from "@/pages/ConfigPage";
+import ToastContainer from "@/components/Toast";
 
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <ToastContainer />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route element={<ProtectedRoute />}>

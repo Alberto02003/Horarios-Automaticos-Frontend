@@ -3,6 +3,7 @@ import PeriodSelector from "@/components/PeriodSelector";
 import ScheduleGrid from "@/components/ScheduleGrid";
 import GenerateDialog from "@/components/GenerateDialog";
 import { useActivatePeriod, useValidation } from "@/api/schedule";
+import { showToast } from "@/components/Toast";
 import type { SchedulePeriod } from "@/types/schedule";
 
 export default function SchedulePage() {
@@ -10,6 +11,28 @@ export default function SchedulePage() {
   const [showGenerate, setShowGenerate] = useState(false);
   const activatePeriod = useActivatePeriod();
   const { data: warnings } = useValidation(selectedPeriod?.id ?? null);
+
+  const handleExportExcel = async () => {
+    if (!selectedPeriod) return;
+    const token = localStorage.getItem("token");
+    const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8080";
+    try {
+      const res = await fetch(`${apiBase}/api/schedule-periods/${selectedPeriod.id}/export/excel`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Error al exportar");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `horarios_${selectedPeriod.name.replace(/ /g, "_")}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("Excel exportado", "success");
+    } catch {
+      showToast("Error al exportar Excel", "error");
+    }
+  };
 
   const handleActivate = () => {
     if (!selectedPeriod || selectedPeriod.status === "active") return;
@@ -32,6 +55,12 @@ export default function SchedulePage() {
         <PeriodSelector selected={selectedPeriod} onSelect={setSelectedPeriod} />
         {selectedPeriod && (
           <div className="flex items-center gap-3">
+            <button
+              onClick={handleExportExcel}
+              className="border border-pink-200 text-pink-700 px-3 py-1.5 rounded-md text-sm font-medium hover:bg-pink-50"
+            >
+              Exportar Excel
+            </button>
             <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
               selectedPeriod.status === "active"
                 ? "bg-green-100 text-green-700"
