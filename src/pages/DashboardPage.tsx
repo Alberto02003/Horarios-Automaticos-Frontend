@@ -25,7 +25,7 @@ export default function DashboardPage() {
   const { data: periods } = usePeriods();
   const { data: members } = useMembers();
   const { data: shiftTypes } = useShiftTypes();
-  const [page, setPage] = useState<Page>("home");
+  const [page, setPage] = useState<Page>("calendar");
   const [selectedPeriod, setSelectedPeriod] = useState<SchedulePeriod | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [calView, setCalView] = useState<CalView>("week");
