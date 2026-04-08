@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Calendar, Download, Sparkles, CheckCircle, Trash2, CalendarDays, CalendarPlus, Home, FileEdit, CheckCircle2, ArrowLeft, Users, Clock } from "lucide-react";
+import { Calendar, Download, Sparkles, CheckCircle, Trash2, CalendarDays, CalendarClock, CalendarRange, CalendarPlus, LayoutGrid, Home, FileEdit, CheckCircle2, Users, Clock } from "lucide-react";
 import CatPaws from "@/components/CatPaws";
 import ProfileMenu from "@/components/ProfileMenu";
 import ConfigMenu from "@/components/ConfigMenu";
@@ -196,13 +196,32 @@ export default function DashboardPage() {
             onViewChange={setCalView}
           />
         ) : (
-          <div className="bg-surface-card rounded-2xl border border-[#F0EDF3] overflow-hidden shadow-xs">
-            <ScheduleGrid
-              periodId={calendarPeriod.id}
-              startDate={calendarPeriod.start_date}
-              endDate={calendarPeriod.end_date}
-              isActive={calendarPeriod.status === "active"}
-            />
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-extrabold text-text-primary tracking-tight">Vista tabla</h2>
+              <div className="flex items-center gap-0.5 bg-[#F0EDF3]/50 rounded-xl p-0.5">
+                {([
+                  { mode: "month" as CalView, icon: CalendarRange, tip: "Mes" },
+                  { mode: "week" as CalView, icon: CalendarDays, tip: "Semana" },
+                  { mode: "day" as CalView, icon: CalendarClock, tip: "Dia" },
+                  { mode: "grid" as CalView, icon: LayoutGrid, tip: "Tabla" },
+                ]).map((v) => (
+                  <Tooltip key={v.mode} content={v.tip}>
+                    <button onClick={() => setCalView(v.mode)} className={`p-1.5 rounded-lg transition-colors ${calView === v.mode ? "bg-white shadow-xs text-text-primary" : "text-text-tertiary hover:text-text-secondary"}`}>
+                      <v.icon size={14} />
+                    </button>
+                  </Tooltip>
+                ))}
+              </div>
+            </div>
+            <div className="bg-surface-card rounded-2xl border border-[#F0EDF3] overflow-hidden shadow-xs">
+              <ScheduleGrid
+                periodId={calendarPeriod.id}
+                startDate={calendarPeriod.start_date}
+                endDate={calendarPeriod.end_date}
+                isActive={calendarPeriod.status === "active"}
+              />
+            </div>
           </div>
         )
       ) : (
@@ -226,11 +245,6 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between px-6 h-14">
           {/* Left: Logo + back */}
           <div className="flex items-center gap-3">
-            {page === "calendar" && (
-              <button onClick={() => { setPage("home"); setSelectedPeriod(null); }} className="p-1.5 rounded-xl hover:bg-p-lavender-light transition-colors">
-                <ArrowLeft size={16} className="text-text-secondary" />
-              </button>
-            )}
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-p-pink flex items-center justify-center">
                 <Calendar size={15} className="text-text-primary" />
