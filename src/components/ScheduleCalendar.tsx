@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarRange, CalendarDays, CalendarClock, LayoutGrid } from "lucide-react";
 import { useMembers } from "@/api/members";
 import { useShiftTypes } from "@/api/shiftTypes";
 import { useAssignments } from "@/api/schedule";
@@ -7,6 +7,8 @@ import type { Assignment } from "@/types/schedule";
 
 const DAY_HEADERS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 const HOURS = Array.from({ length: 17 }, (_, i) => i + 6); // 06:00 - 22:00
+
+type CalView = "month" | "week" | "day" | "grid";
 
 interface Props {
   periodId: number;
@@ -16,6 +18,7 @@ interface Props {
   onDayClick: (date: string) => void;
   selectedDay: string | null;
   view?: "month" | "week" | "day";
+  onViewChange?: (view: CalView) => void;
 }
 
 function getMondayOfWeek(date: Date): Date {
@@ -51,7 +54,7 @@ function timeToMinutes(timeStr: string | null, fallback: number): number {
 
 const DAY_NAMES_FULL = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
 
-export default function ScheduleCalendar({ periodId, startDate, endDate, isActive, onDayClick, selectedDay, view = "week" }: Props) {
+export default function ScheduleCalendar({ periodId, startDate, endDate, isActive, onDayClick, selectedDay, view = "week", onViewChange }: Props) {
   const { data: members } = useMembers();
   const { data: shiftTypes } = useShiftTypes();
   const { data: assignments } = useAssignments(periodId);
@@ -166,6 +169,24 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
   const currentDayDate = new Date(currentDayStr + "T00:00:00");
   const dayAssignments = assignmentsByDate[currentDayStr] || [];
 
+  // View toggle (rendered inside each view)
+  const viewToggle = onViewChange ? (
+    <div className="flex items-center gap-0.5 bg-[#F0EDF3]/50 rounded-xl p-0.5">
+      {([
+        { mode: "month" as CalView, icon: CalendarRange, tip: "Mes" },
+        { mode: "week" as CalView, icon: CalendarDays, tip: "Semana" },
+        { mode: "day" as CalView, icon: CalendarClock, tip: "Dia" },
+        { mode: "grid" as CalView, icon: LayoutGrid, tip: "Tabla" },
+      ]).map((v) => (
+        <button key={v.mode} onClick={() => onViewChange(v.mode)} title={v.tip}
+          className={`p-1.5 rounded-lg transition-colors ${(view === v.mode || (v.mode === "grid" && view !== "month" && view !== "week" && view !== "day")) ? "bg-white shadow-xs text-text-primary" : "text-text-tertiary hover:text-text-secondary"}`}
+        >
+          <v.icon size={14} />
+        </button>
+      ))}
+    </div>
+  ) : null;
+
   // Monthly view render
   if (view === "month") {
     // Build calendar grid: weeks of Mon-Sun
@@ -207,7 +228,10 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
           <h2 className="text-lg font-extrabold text-text-primary tracking-tight">
             {MONTHS_FULL[month]} {year}
           </h2>
-          <p className="text-xs text-text-tertiary">{(assignments || []).length} asignaciones</p>
+          <div className="flex items-center gap-3">
+            <p className="text-xs text-text-tertiary">{(assignments || []).length} asignaciones</p>
+            {viewToggle}
+          </div>
         </div>
 
         {/* Day headers */}
@@ -336,12 +360,15 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
 
         {/* Daily time grid */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-4">
-            <button onClick={prevDay} className="p-1.5 rounded-lg hover:bg-p-lavender-light transition-colors"><ChevronLeft size={18} className="text-text-secondary" /></button>
-            <button onClick={nextDay} className="p-1.5 rounded-lg hover:bg-p-lavender-light transition-colors"><ChevronRight size={18} className="text-text-secondary" /></button>
-            <h2 className="text-xl font-extrabold text-text-primary tracking-tight">
-              {DAY_NAMES_FULL[currentDayDate.getDay()]}, {currentDayDate.getDate()} de {MONTHS_FULL[currentDayDate.getMonth()]}
-            </h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <button onClick={prevDay} className="p-1.5 rounded-lg hover:bg-p-lavender-light transition-colors"><ChevronLeft size={18} className="text-text-secondary" /></button>
+              <button onClick={nextDay} className="p-1.5 rounded-lg hover:bg-p-lavender-light transition-colors"><ChevronRight size={18} className="text-text-secondary" /></button>
+              <h2 className="text-xl font-extrabold text-text-primary tracking-tight">
+                {DAY_NAMES_FULL[currentDayDate.getDay()]}, {currentDayDate.getDate()} de {MONTHS_FULL[currentDayDate.getMonth()]}
+              </h2>
+            </div>
+            {viewToggle}
           </div>
 
           <div className="bg-surface-card rounded-xl border border-[#F0EDF3] overflow-auto" style={{ maxHeight: "calc(100vh - 280px)" }}>
@@ -496,11 +523,14 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
       {/* Main weekly view */}
       <div className="flex-1 min-w-0">
         {/* Week navigation */}
-        <div className="flex items-center gap-3 mb-4">
-          <button onClick={prevWeek} className="p-1.5 rounded-lg hover:bg-p-lavender-light transition-colors"><ChevronLeft size={18} className="text-text-secondary" /></button>
-          <button onClick={nextWeek} className="p-1.5 rounded-lg hover:bg-p-lavender-light transition-colors"><ChevronRight size={18} className="text-text-secondary" /></button>
-          <h2 className="text-xl font-extrabold text-text-primary tracking-tight">{formatDateRange(currentWeekStart)}</h2>
-          <span className="text-[10px] font-semibold text-text-tertiary bg-[#F0EDF3] px-2.5 py-1 rounded-full uppercase tracking-wide">Semana {getWeekNumber(currentWeekStart)}</span>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <button onClick={prevWeek} className="p-1.5 rounded-lg hover:bg-p-lavender-light transition-colors"><ChevronLeft size={18} className="text-text-secondary" /></button>
+            <button onClick={nextWeek} className="p-1.5 rounded-lg hover:bg-p-lavender-light transition-colors"><ChevronRight size={18} className="text-text-secondary" /></button>
+            <h2 className="text-xl font-extrabold text-text-primary tracking-tight">{formatDateRange(currentWeekStart)}</h2>
+            <span className="text-[10px] font-semibold text-text-tertiary bg-[#F0EDF3] px-2.5 py-1 rounded-full uppercase tracking-wide">Semana {getWeekNumber(currentWeekStart)}</span>
+          </div>
+          {viewToggle}
         </div>
 
         {/* Day headers */}

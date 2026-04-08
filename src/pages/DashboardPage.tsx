@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Calendar, Download, Sparkles, CheckCircle, Trash2, LayoutGrid, CalendarDays, CalendarClock, CalendarRange, CalendarPlus, Home, FileEdit, CheckCircle2, ArrowLeft, Users, Clock } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Calendar, Download, Sparkles, CheckCircle, Trash2, CalendarDays, CalendarPlus, Home, FileEdit, CheckCircle2, ArrowLeft, Users, Clock } from "lucide-react";
 import ProfileMenu from "@/components/ProfileMenu";
 import ConfigMenu from "@/components/ConfigMenu";
 import PeriodSelector from "@/components/PeriodSelector";
@@ -40,11 +40,18 @@ export default function DashboardPage() {
   useValidation(selectedPeriod?.id ?? null);
   const { toast } = useToast();
 
-  const currentYear = new Date().getFullYear();
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
   const drafts = (periods || []).filter((p) => p.status === "draft");
   const activeCurrentYear = (periods || []).filter((p) => p.status === "active" && p.year === currentYear);
   const activeMembers = (members || []).filter((m) => m.is_active);
   const activeShifts = (shiftTypes || []).filter((s) => s.is_active);
+
+  // Auto-load current month's active period for calendar view
+  const currentMonthPeriod = useMemo(() => {
+    return (periods || []).find((p) => p.status === "active" && p.year === currentYear && p.month === currentMonth) || null;
+  }, [periods, currentYear, currentMonth]);
 
   const openPeriod = (p: SchedulePeriod) => {
     setSelectedPeriod(p);
@@ -52,11 +59,12 @@ export default function DashboardPage() {
   };
 
   const handleExportExcel = async () => {
-    if (!selectedPeriod) return;
+    const p = calendarPeriod;
+    if (!p) return;
     const token = localStorage.getItem("token");
     const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8080";
     try {
-      const res = await fetch(`${apiBase}/api/schedule-periods/${selectedPeriod.id}/export/excel`, {
+      const res = await fetch(`${apiBase}/api/schedule-periods/${p.id}/export/excel`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Error");
@@ -64,7 +72,7 @@ export default function DashboardPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `horarios_${selectedPeriod.name.replace(/ /g, "_")}.xlsx`;
+      a.download = `horarios_${p.name.replace(/ /g, "_")}.xlsx`;
       a.click();
       URL.revokeObjectURL(url);
       toast("Excel exportado");
@@ -72,16 +80,18 @@ export default function DashboardPage() {
   };
 
   const handleActivate = () => {
-    if (!selectedPeriod) return;
-    activatePeriod.mutate(selectedPeriod.id, {
+    const p = calendarPeriod;
+    if (!p) return;
+    activatePeriod.mutate(p.id, {
       onSuccess: (updated) => { setSelectedPeriod(updated); setShowActivateConfirm(false); toast("Periodo activado"); },
       onError: (err) => { setShowActivateConfirm(false); toast(err instanceof Error ? err.message : "Error", "error"); },
     });
   };
 
   const handleDelete = () => {
-    if (!selectedPeriod) return;
-    deletePeriod.mutate(selectedPeriod.id, {
+    const p = calendarPeriod;
+    if (!p) return;
+    deletePeriod.mutate(p.id, {
       onSuccess: () => { setSelectedPeriod(null); setShowDeleteConfirm(false); setPage("home"); toast("Periodo eliminado"); },
     });
   };
@@ -168,26 +178,29 @@ export default function DashboardPage() {
   );
 
   // ─── CALENDAR PAGE ───
+  const calendarPeriod = selectedPeriod || currentMonthPeriod;
+
   const renderCalendar = () => (
     <div className="px-6 py-5">
-      {selectedPeriod ? (
+      {calendarPeriod ? (
         calView === "month" || calView === "week" || calView === "day" ? (
           <ScheduleCalendar
-            periodId={selectedPeriod.id}
-            startDate={selectedPeriod.start_date}
-            endDate={selectedPeriod.end_date}
-            isActive={selectedPeriod.status === "active"}
+            periodId={calendarPeriod.id}
+            startDate={calendarPeriod.start_date}
+            endDate={calendarPeriod.end_date}
+            isActive={calendarPeriod.status === "active"}
             onDayClick={(date) => setSelectedDay(date)}
             selectedDay={selectedDay}
             view={calView}
+            onViewChange={setCalView}
           />
         ) : (
           <div className="bg-surface-card rounded-2xl border border-[#F0EDF3] overflow-hidden shadow-xs">
             <ScheduleGrid
-              periodId={selectedPeriod.id}
-              startDate={selectedPeriod.start_date}
-              endDate={selectedPeriod.end_date}
-              isActive={selectedPeriod.status === "active"}
+              periodId={calendarPeriod.id}
+              startDate={calendarPeriod.start_date}
+              endDate={calendarPeriod.end_date}
+              isActive={calendarPeriod.status === "active"}
             />
           </div>
         )
@@ -196,8 +209,8 @@ export default function DashboardPage() {
           <div className="w-16 h-16 rounded-2xl bg-p-lavender-light flex items-center justify-center mx-auto mb-4">
             <CalendarPlus size={28} className="text-text-tertiary" />
           </div>
-          <p className="text-lg font-semibold text-text-primary">Selecciona un periodo</p>
-          <p className="text-sm text-text-secondary mt-1">Vuelve al inicio para elegir un horario</p>
+          <p className="text-lg font-semibold text-text-primary">No hay horario activo para este mes</p>
+          <p className="text-sm text-text-secondary mt-1">Crea y activa un horario desde la pestaña de inicio</p>
         </div>
       )}
     </div>
@@ -241,24 +254,8 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          {/* Right: view toggle (only in calendar) + Config + Profile */}
+          {/* Right: Config + Profile */}
           <div className="flex items-center gap-2">
-            {page === "calendar" && selectedPeriod && (
-              <div className="flex items-center gap-0.5 bg-[#F0EDF3]/50 rounded-xl p-0.5 mr-1">
-                {([
-                  { mode: "month" as CalView, icon: CalendarRange, tip: "Mes" },
-                  { mode: "week" as CalView, icon: CalendarDays, tip: "Semana" },
-                  { mode: "day" as CalView, icon: CalendarClock, tip: "Dia" },
-                  { mode: "grid" as CalView, icon: LayoutGrid, tip: "Tabla" },
-                ]).map((v) => (
-                  <Tooltip key={v.mode} content={v.tip}>
-                    <button onClick={() => setCalView(v.mode)} className={`p-1.5 rounded-lg transition-colors ${calView === v.mode ? "bg-surface-card shadow-xs text-text-primary" : "text-text-tertiary"}`}>
-                      <v.icon size={13} />
-                    </button>
-                  </Tooltip>
-                ))}
-              </div>
-            )}
             <ConfigMenu />
             <ProfileMenu />
           </div>
@@ -269,17 +266,17 @@ export default function DashboardPage() {
       {page === "home" ? renderHome() : renderCalendar()}
 
       {/* Floating bottom bar — only in calendar view with period */}
-      {page === "calendar" && selectedPeriod && (
+      {page === "calendar" && calendarPeriod && (
         <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40">
           <div className="flex items-center gap-2 bg-surface-card/95 backdrop-blur-lg border border-[#F0EDF3] rounded-2xl shadow-lg px-4 py-2.5">
-            <PeriodSelector selected={selectedPeriod} onSelect={setSelectedPeriod} />
+            <PeriodSelector selected={calendarPeriod} onSelect={setSelectedPeriod} />
             <div className="w-px h-6 bg-[#F0EDF3] mx-1" />
             <span className={`text-[9px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-xl ${
-              selectedPeriod.status === "active" ? "bg-p-mint text-text-primary" : "bg-p-yellow/60 text-text-primary"
+              calendarPeriod.status === "active" ? "bg-p-mint text-text-primary" : "bg-p-yellow/60 text-text-primary"
             }`}>
-              {selectedPeriod.status === "active" ? "Activo" : "Borrador"}
+              {calendarPeriod.status === "active" ? "Activo" : "Borrador"}
             </span>
-            {selectedPeriod.status === "draft" && (
+            {calendarPeriod.status === "draft" && (
               <>
                 <button onClick={() => setShowGenerate(true)} className="btn-pastel-lilac text-[11px] px-3 py-1.5 rounded-xl"><Sparkles size={13} /> Generar</button>
                 <button onClick={() => setShowActivateConfirm(true)} className="btn-pastel-mint text-[11px] px-3 py-1.5 rounded-xl"><CheckCircle size={13} /> Activar</button>
@@ -290,7 +287,7 @@ export default function DashboardPage() {
               <button onClick={handleExportExcel} className="p-2 rounded-xl hover:bg-p-lavender-light transition-colors"><Download size={15} className="text-text-secondary" /></button>
             </Tooltip>
             <Tooltip content="Eliminar">
-              <button onClick={() => setShowDeleteConfirm(true)} className="p-2 rounded-xl hover:bg-p-pink-light transition-colors"><Trash2 size={15} className="text-text-tertiary" /></button>
+              <button onClick={() => { setShowDeleteConfirm(true); setSelectedPeriod(calendarPeriod); }} className="p-2 rounded-xl hover:bg-p-pink-light transition-colors"><Trash2 size={15} className="text-text-tertiary" /></button>
             </Tooltip>
           </div>
         </div>
@@ -306,12 +303,12 @@ export default function DashboardPage() {
       )}
 
       {/* Modals */}
-      {selectedDay && selectedPeriod && (
-        <DayDetailPanel open={!!selectedDay} onOpenChange={(open) => { if (!open) setSelectedDay(null); }} periodId={selectedPeriod.id} date={selectedDay} isActive={selectedPeriod.status === "active"} />
+      {selectedDay && calendarPeriod && (
+        <DayDetailPanel open={!!selectedDay} onOpenChange={(open) => { if (!open) setSelectedDay(null); }} periodId={calendarPeriod.id} date={selectedDay} isActive={calendarPeriod.status === "active"} />
       )}
       <TeamModal open={showTeam} onOpenChange={setShowTeam} />
       <ShiftsModal open={showShifts} onOpenChange={setShowShifts} />
-      <GenerateDialog periodId={selectedPeriod?.id ?? 0} open={showGenerate && !!selectedPeriod} onOpenChange={setShowGenerate} />
+      <GenerateDialog periodId={calendarPeriod?.id ?? 0} open={showGenerate && !!calendarPeriod} onOpenChange={setShowGenerate} />
       <ConfirmDialog open={showActivateConfirm} onOpenChange={setShowActivateConfirm} title="Activar periodo" description="No se podran editar las asignaciones." onConfirm={handleActivate} confirmLabel="Activar" variant="warning" />
       <ConfirmDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm} title="Eliminar periodo" description={`Se eliminara "${selectedPeriod?.name}" y todas sus asignaciones.`} onConfirm={handleDelete} confirmLabel="Eliminar" variant="danger" />
     </div>
