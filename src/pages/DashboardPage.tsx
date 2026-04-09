@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from "react";
-import { Calendar, Download, Sparkles, CheckCircle, Trash2, LayoutGrid, CalendarDays, CalendarClock, CalendarRange, CalendarPlus, Plus, Home, FileEdit, CheckCircle2, Users, Clock } from "lucide-react";
+import { Calendar, Download, Sparkles, CheckCircle, Trash2, LayoutGrid, CalendarDays, CalendarClock, CalendarRange, CalendarPlus, Plus, X, Home, FileEdit, CheckCircle2, Users, Clock } from "lucide-react";
 import CatPaws from "@/components/CatPaws";
 import { DragProvider } from "@/components/drag/DragContext";
 // DragMembersPanel is now rendered inside ScheduleCalendar sidebar
@@ -318,7 +318,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-1 bg-[#F0EDF3]/50 rounded-xl p-1">
-            <button onClick={() => { setPage("home"); setBrowsePeriod(null); }}
+            <button onClick={() => setPage("home")}
               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 page === "home" ? "bg-surface-card shadow-xs text-text-primary" : "text-text-tertiary hover:text-text-secondary"
               }`}
@@ -351,7 +351,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Floating bottom bar — always visible: active period + generate */}
+      {/* Floating bottom bar */}
       <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40">
         <div className="flex items-center gap-3 bg-surface-card/95 backdrop-blur-lg border border-[#F0EDF3] rounded-2xl shadow-lg px-5 py-3">
           {currentMonthPeriod ? (
@@ -364,6 +364,21 @@ export default function DashboardPage() {
               <div className="w-px h-6 bg-[#F0EDF3]" />
               <button onClick={() => setShowGenerate(true)} className="btn-pastel-lilac text-[11px] px-3 py-1.5 rounded-xl">
                 <Sparkles size={13} /> Generar
+              </button>
+            </>
+          ) : browsePeriod ? (
+            <>
+              <button onClick={() => setPage("calendar")} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <CalendarDays size={15} className="text-text-secondary" />
+                <span className="text-sm font-semibold text-text-primary">{browsePeriod.name}</span>
+                <span className="text-[9px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-p-yellow/60 text-amber-700">Borrador</span>
+              </button>
+              <div className="w-px h-6 bg-[#F0EDF3]" />
+              <button onClick={() => setShowGenerate(true)} className="btn-pastel-lilac text-[11px] px-3 py-1.5 rounded-xl">
+                <Sparkles size={13} /> Generar
+              </button>
+              <button onClick={() => setBrowsePeriod(null)} className="p-1.5 rounded-lg hover:bg-p-pink-light transition-colors" title="Deseleccionar">
+                <X size={13} className="text-text-tertiary" />
               </button>
             </>
           ) : (
