@@ -236,7 +236,7 @@ export default function DashboardPage() {
               <button onClick={() => setShowDeleteConfirm(true)} className="p-2 rounded-xl hover:bg-p-pink-light transition-colors"><Trash2 size={14} className="text-text-tertiary" /></button>
             </Tooltip>
           </div>
-          <div className="flex items-center gap-0.5 bg-[#F0EDF3]/50 rounded-xl p-0.5">
+          <div className="flex items-center gap-1 bg-[#F0EDF3]/50 rounded-xl p-0.5 self-start sm:self-auto">
             {([
               { mode: "month" as CalView, icon: CalendarRange, tip: "Mes" },
               { mode: "week" as CalView, icon: CalendarDays, tip: "Semana" },
@@ -244,8 +244,8 @@ export default function DashboardPage() {
               { mode: "grid" as CalView, icon: LayoutGrid, tip: "Tabla" },
             ]).map((v) => (
               <Tooltip key={v.mode} content={v.tip}>
-                <button onClick={() => setCalView(v.mode)} className={`p-1.5 rounded-lg transition-colors ${calView === v.mode ? "bg-white shadow-xs text-text-primary" : "text-text-tertiary hover:text-text-secondary"}`}>
-                  <v.icon size={14} />
+                <button onClick={() => setCalView(v.mode)} className={`p-2 sm:p-1.5 rounded-lg transition-colors ${calView === v.mode ? "bg-white shadow-xs text-text-primary" : "text-text-tertiary hover:text-text-secondary"}`}>
+                  <v.icon size={15} />
                 </button>
               </Tooltip>
             ))}

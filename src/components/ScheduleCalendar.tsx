@@ -580,8 +580,8 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
             {/* Hour lines */}
             {HOURS.map((hour, i) => (
               <div key={hour} className="absolute left-0 right-0 border-t border-[#F0EDF3]/60" style={{ top: `${i * ROW_HEIGHT}rem` }}>
-                <div className="text-right pr-1 sm:pr-2 -mt-2">
-                  <span className="text-[10px] font-medium text-text-tertiary">{String(hour).padStart(2, "0")}:00</span>
+                <div className="absolute left-0 -mt-2 pl-1 sm:pl-2" style={{ width: TIME_COL }}>
+                  <span className="text-[9px] sm:text-[10px] font-medium text-text-tertiary">{String(hour).padStart(2, "0")}:00</span>
                 </div>
               </div>
             ))}
@@ -639,18 +639,18 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
                         <div
                           key={shiftId}
                           onClick={(e) => { e.stopPropagation(); onDayClick(date); }}
-                          className="absolute rounded-lg px-2 py-1.5 overflow-hidden cursor-pointer hover:brightness-95 transition-all"
+                          className="absolute rounded-lg px-1 sm:px-2 py-1 sm:py-1.5 overflow-hidden cursor-pointer hover:brightness-95 transition-all"
                           style={{
                             top: `${topRem}rem`,
                             height: `${heightRem}rem`,
                             left: `${leftPct}%`,
                             width: `${widthPct}%`,
                             backgroundColor: shift.color + "15",
-                            borderLeft: `3px solid ${shift.color}`,
+                            borderLeft: `${isMobile ? 2 : 3}px solid ${shift.color}`,
                           }}
                         >
-                          <p className="text-[10px] font-bold" style={{ color: shift.color }}>
-                            {shift.code} · {shift.start_time || "—"}-{shift.end_time || "—"}
+                          <p className="text-[8px] sm:text-[10px] font-bold truncate" style={{ color: shift.color }}>
+                            {shift.code}{!isMobile && ` · ${shift.start_time || "—"}-${shift.end_time || "—"}`}
                           </p>
                           <div className="mt-0.5 space-y-[1px]">
                             {members_list.map((a) => {
@@ -671,9 +671,9 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
                                   onDragEnd={canDrag ? () => { dragCtx?.setDragPayload(null); dragCtx?.setHighlightedDate(null); } : undefined}
                                   className={`flex items-center gap-1 ${canDrag ? "cursor-grab active:cursor-grabbing hover:bg-white/30 rounded" : ""}`}
                                 >
-                                  <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: m.color_tag }} />
-                                  <span className="text-[10px] truncate text-text-primary">{m.full_name}</span>
-                                  {a.is_locked && <span className="text-[8px]">🔒</span>}
+                                  <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full shrink-0" style={{ backgroundColor: m.color_tag }} />
+                                  <span className="text-[8px] sm:text-[10px] truncate text-text-primary">{isMobile ? m.full_name.split(" ")[0] : m.full_name}</span>
+                                  {a.is_locked && <span className="text-[7px] sm:text-[8px]">🔒</span>}
                                 </div>
                               );
                             })}
