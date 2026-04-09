@@ -44,11 +44,7 @@
     }
   },
   "plugins": {
-    "opener": {
-      "openUrl": {
-        "enabled": true
-      }
-    },
+    "opener": {},
     "updater": {
       "endpoints": [
         "https://github.com/Alberto02003/Horarios-Automaticos-Frontend/releases/latest/download/latest.json"
