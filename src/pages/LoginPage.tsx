@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AlertCircle, Calendar } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { api } from "@/api/client";
+import CatPaws from "@/components/CatPaws";
 
 interface LoginResponse {
   access_token: string;
@@ -32,61 +33,54 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-surface">
-      {/* Left panel — branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-sidebar-bg items-center justify-center p-12">
-        <div className="max-w-md">
-          <div className="w-14 h-14 rounded-2xl bg-p-pink flex items-center justify-center mb-8">
-            <Calendar size={28} className="text-text-primary" />
+    <div className="min-h-screen bg-surface relative flex items-center justify-center">
+      <CatPaws />
+
+      <div className="relative z-10 w-full max-w-md px-6">
+        {/* Logo */}
+        <div className="flex items-center gap-3 justify-center mb-10">
+          <div className="w-12 h-12 rounded-2xl bg-p-pink flex items-center justify-center">
+            <Calendar size={22} className="text-text-primary" />
           </div>
-          <h1 className="text-4xl font-extrabold text-white leading-tight tracking-tight">
-            Gestiona horarios<br />de forma simple
-          </h1>
-          <p className="text-sidebar-text mt-4 text-lg leading-relaxed">
-            Genera, revisa y aprueba los turnos de tu equipo en un solo lugar.
-          </p>
-          <div className="flex gap-3 mt-8">
-            {["#FFD1DC", "#A2CFFE", "#AAF0D1", "#E3E4FA", "#DCD0FF", "#FFDAB9"].map((c) => (
-              <div key={c} className="w-8 h-8 rounded-full" style={{ backgroundColor: c }} />
-            ))}
+          <div>
+            <h1 className="text-2xl font-extrabold text-text-primary tracking-tight leading-none">Horarios</h1>
+            <p className="text-[10px] font-semibold text-text-tertiary uppercase tracking-widest">Automaticos</p>
           </div>
         </div>
-      </div>
 
-      {/* Right panel — form */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <form onSubmit={handleSubmit} className="w-full max-w-sm">
-          <div className="lg:hidden flex items-center gap-2.5 mb-8">
-            <div className="w-9 h-9 rounded-xl bg-p-pink flex items-center justify-center">
-              <Calendar size={18} className="text-text-primary" />
-            </div>
-            <span className="text-lg font-bold text-text-primary tracking-tight">Horarios</span>
-          </div>
-
-          <h2 className="text-2xl font-extrabold text-text-primary tracking-tight">Bienvenida</h2>
-          <p className="text-text-secondary mt-1 mb-8">Inicia sesion para continuar</p>
+        {/* Card */}
+        <div className="bg-surface-card rounded-2xl border border-[#F0EDF3] shadow-lg p-8">
+          <h2 className="text-xl font-extrabold text-text-primary tracking-tight text-center">Bienvenida</h2>
+          <p className="text-sm text-text-secondary text-center mt-1 mb-6">Inicia sesion para continuar</p>
 
           {error && (
-            <div className="flex items-center gap-2 bg-p-pink-light border border-p-pink text-p-pink-deep px-4 py-2.5 rounded-lg text-sm mb-5 animate-slide-up">
+            <div className="flex items-center gap-2 bg-p-pink-light border border-p-pink text-p-pink-deep px-4 py-2.5 rounded-xl text-sm mb-5 animate-scale-in">
               <AlertCircle size={16} />
               {error}
             </div>
           )}
 
-          <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">Email</label>
+              <label className="block text-[10px] font-semibold text-text-tertiary mb-1.5 uppercase tracking-wide">Email</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input-pastel" placeholder="tu@email.com" required />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">Contrasena</label>
+              <label className="block text-[10px] font-semibold text-text-tertiary mb-1.5 uppercase tracking-wide">Contrasena</label>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input-pastel" placeholder="••••••••" required />
             </div>
-            <button type="submit" disabled={loading} className="btn-primary w-full mt-2">
+            <button type="submit" disabled={loading} className="btn-primary w-full mt-2 rounded-xl">
               {loading ? "Entrando..." : "Entrar"}
             </button>
-          </div>
-        </form>
+          </form>
+        </div>
+
+        {/* Footer palette */}
+        <div className="flex gap-2 justify-center mt-8">
+          {["#FFD1DC", "#A2CFFE", "#AAF0D1", "#E3E4FA", "#DCD0FF", "#FFDAB9", "#B0E0E6", "#FFFACD"].map((c) => (
+            <div key={c} className="w-5 h-5 rounded-full" style={{ backgroundColor: c }} />
+          ))}
+        </div>
       </div>
     </div>
   );
