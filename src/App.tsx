@@ -4,6 +4,7 @@ import { queryClient } from "@/api/queryClient";
 import { TooltipProvider } from "@/components/ui/Tooltip";
 import ToastProvider from "@/components/ui/ToastProvider";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import UpdateChecker from "@/components/UpdateChecker";
 import LoginPage from "@/pages/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
 
@@ -12,6 +13,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <ToastProvider>
+          <UpdateChecker />
           <BrowserRouter>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
