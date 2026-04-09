@@ -258,9 +258,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
         {/* Sidebar for monthly view */}
         <div className="w-[240px] shrink-0 flex flex-col gap-3" style={{ maxHeight: CAL_HEIGHT }}>
           {!isActive && dragCtx && <DragMembersPanel />}
-          <div className="flex-1 min-h-0 overflow-auto">
-            <ShiftsInfoWidget onOpenConfig={onOpenConfig} />
-          </div>
+          <ShiftsInfoWidget onOpenConfig={onOpenConfig} />
         </div>
         <div className="flex-1 min-w-0 bg-surface-card rounded-xl border border-[#F0EDF3] overflow-auto" style={{ maxHeight: CAL_HEIGHT }}>
         {/* Month header */}
@@ -385,9 +383,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
           {!isActive && dragCtx && <DragMembersPanel />}
 
           {/* Shifts info */}
-          <div className="flex-1 min-h-0 overflow-auto">
-            <ShiftsInfoWidget onOpenConfig={onOpenConfig} />
-          </div>
+          <ShiftsInfoWidget onOpenConfig={onOpenConfig} />
         </div>
 
         {/* Daily time grid */}
@@ -542,9 +538,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
 
         {!isActive && dragCtx && <DragMembersPanel />}
 
-        <div className="flex-1 min-h-0 overflow-auto">
-          <ShiftsInfoWidget onOpenConfig={onOpenConfig} />
-        </div>
+        <ShiftsInfoWidget onOpenConfig={onOpenConfig} />
       </div>
 
       {/* Main weekly view */}
