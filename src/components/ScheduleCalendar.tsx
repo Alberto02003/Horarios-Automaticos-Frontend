@@ -165,23 +165,6 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
 
   const MONTHS_FULL = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
-  const categorySummary = useMemo(() => {
-    const counts: Record<string, { name: string; color: string; hours: number }> = {};
-    const weekAssignments = weekDates.flatMap((d) => assignmentsByDate[d] || []);
-    weekAssignments.forEach((a) => {
-      const shift = shiftMap[a.shift_type_id];
-      if (shift) {
-        if (!counts[shift.code]) counts[shift.code] = { name: shift.name, color: shift.color, hours: 0 };
-        const startMin = timeToMinutes(shift.start_time, 480);
-        let endMin = timeToMinutes(shift.end_time, 960);
-        let dur = endMin - startMin;
-        if (dur <= 0) dur += 24 * 60;
-        counts[shift.code].hours += dur / 60;
-      }
-    });
-    return Object.values(counts);
-  }, [weekDates, assignmentsByDate, shiftMap]);
-
   const ROW_HEIGHT = 3.5; // rem per hour
   const GRID_START = 6; // 06:00
   const CAL_HEIGHT = "650px"; // consistent height across views
@@ -257,7 +240,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
       <div className="flex gap-6">
         {/* Sidebar for monthly view */}
         <div className="w-[240px] shrink-0 flex flex-col gap-3" style={{ maxHeight: CAL_HEIGHT }}>
-          {!isActive && dragCtx && <DragMembersPanel />}
+          {!isActive && dragCtx && <DragMembersPanel onOpenConfig={onOpenConfig} />}
           <ShiftsInfoWidget onOpenConfig={onOpenConfig} />
         </div>
         <div className="flex-1 min-w-0 bg-surface-card rounded-xl border border-[#F0EDF3] overflow-auto" style={{ height: CAL_HEIGHT }}>
@@ -380,7 +363,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
             </div>
           </div>
 
-          {!isActive && dragCtx && <DragMembersPanel />}
+          {!isActive && dragCtx && <DragMembersPanel onOpenConfig={onOpenConfig} />}
 
           {/* Shifts info */}
           <ShiftsInfoWidget onOpenConfig={onOpenConfig} />
@@ -471,8 +454,21 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
                           {members_list.map((a) => {
                             const m = memberMap[a.member_id];
                             if (!m) return null;
+                            const canDrag = !isActive && !a.is_locked;
                             return (
-                              <div key={a.id} className="flex items-center gap-2">
+                              <div
+                                key={a.id}
+                                draggable={canDrag}
+                                onDragStart={canDrag ? (e) => {
+                                  e.stopPropagation();
+                                  const payload: DragPayload = { type: "move-assignment", memberId: a.member_id, memberName: m.full_name, memberColor: m.color_tag, sourceDate: currentDayStr, assignmentId: a.id, shiftTypeId: a.shift_type_id };
+                                  e.dataTransfer.setData("application/json", JSON.stringify(payload));
+                                  e.dataTransfer.effectAllowed = "move";
+                                  dragCtx?.setDragPayload(payload);
+                                } : undefined}
+                                onDragEnd={canDrag ? () => { dragCtx?.setDragPayload(null); dragCtx?.setHighlightedDate(null); } : undefined}
+                                className={`flex items-center gap-2 ${canDrag ? "cursor-grab active:cursor-grabbing hover:bg-white/30 rounded-lg px-1 -mx-1" : ""}`}
+                              >
                                 <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold shrink-0" style={{ backgroundColor: m.color_tag }}>
                                   {m.full_name.charAt(0)}
                                 </div>
@@ -536,7 +532,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
           </div>
         </div>
 
-        {!isActive && dragCtx && <DragMembersPanel />}
+        {!isActive && dragCtx && <DragMembersPanel onOpenConfig={onOpenConfig} />}
 
         <ShiftsInfoWidget onOpenConfig={onOpenConfig} />
       </div>
@@ -656,8 +652,21 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
                             {members_list.map((a) => {
                               const m = memberMap[a.member_id];
                               if (!m) return null;
+                              const canDrag = !isActive && !a.is_locked;
                               return (
-                                <div key={a.id} className="flex items-center gap-1">
+                                <div
+                                  key={a.id}
+                                  draggable={canDrag}
+                                  onDragStart={canDrag ? (e) => {
+                                    e.stopPropagation();
+                                    const payload: DragPayload = { type: "move-assignment", memberId: a.member_id, memberName: m.full_name, memberColor: m.color_tag, sourceDate: date, assignmentId: a.id, shiftTypeId: a.shift_type_id };
+                                    e.dataTransfer.setData("application/json", JSON.stringify(payload));
+                                    e.dataTransfer.effectAllowed = "move";
+                                    dragCtx?.setDragPayload(payload);
+                                  } : undefined}
+                                  onDragEnd={canDrag ? () => { dragCtx?.setDragPayload(null); dragCtx?.setHighlightedDate(null); } : undefined}
+                                  className={`flex items-center gap-1 ${canDrag ? "cursor-grab active:cursor-grabbing hover:bg-white/30 rounded" : ""}`}
+                                >
                                   <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: m.color_tag }} />
                                   <span className="text-[10px] truncate text-text-primary">{m.full_name}</span>
                                   {a.is_locked && <span className="text-[8px]">🔒</span>}
