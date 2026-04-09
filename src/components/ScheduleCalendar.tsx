@@ -5,6 +5,7 @@ import { useShiftTypes } from "@/api/shiftTypes";
 import { useAssignments } from "@/api/schedule";
 import { useDrag, type DragPayload } from "@/components/drag/DragContext";
 import DragMembersPanel from "@/components/drag/DragMembersPanel";
+import ShiftsInfoWidget from "@/components/ShiftsInfoWidget";
 import type { Assignment } from "@/types/schedule";
 
 const DAY_HEADERS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
@@ -21,6 +22,7 @@ interface Props {
   selectedDay: string | null;
   view?: "month" | "week" | "day";
   onViewChange?: (view: CalView) => void;
+  onOpenConfig?: () => void;
 }
 
 function getMondayOfWeek(date: Date): Date {
@@ -56,7 +58,7 @@ function timeToMinutes(timeStr: string | null, fallback: number): number {
 
 const DAY_NAMES_FULL = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
 
-export default function ScheduleCalendar({ periodId, startDate, endDate, isActive, onDayClick, selectedDay, view = "week", onViewChange }: Props) {
+export default function ScheduleCalendar({ periodId, startDate, endDate, isActive, onDayClick, selectedDay, view = "week", onViewChange, onOpenConfig }: Props) {
 
   const { data: members } = useMembers();
   const { data: shiftTypes } = useShiftTypes();
@@ -253,11 +255,10 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
     return (
       <div className="flex gap-6">
         {/* Sidebar for monthly view */}
-        {!isActive && dragCtx && (
-          <div className="w-[200px] shrink-0">
-            <DragMembersPanel />
-          </div>
-        )}
+        <div className="w-[200px] shrink-0 space-y-3">
+          {!isActive && dragCtx && <DragMembersPanel />}
+          <ShiftsInfoWidget onOpenConfig={onOpenConfig} />
+        </div>
         <div className="flex-1 min-w-0 bg-surface-card rounded-xl border border-[#F0EDF3] overflow-hidden">
         {/* Month header */}
         <div className="px-5 py-4 border-b border-[#F0EDF3] flex items-center justify-between">
@@ -380,26 +381,8 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
 
           {!isActive && dragCtx && <DragMembersPanel />}
 
-          {/* Day summary */}
-          <div className="bg-surface-card rounded-xl border border-[#F0EDF3] p-4">
-            <h3 className="text-sm font-bold text-text-primary mb-3">Resumen del dia</h3>
-            <p className="text-xs text-text-tertiary">{dayAssignments.length} asignacion{dayAssignments.length !== 1 ? "es" : ""}</p>
-            {dayAssignments.length > 0 && (
-              <div className="mt-3 space-y-2">
-                {dayAssignments.map((a) => {
-                  const shift = shiftMap[a.shift_type_id];
-                  const member = memberMap[a.member_id];
-                  if (!shift || !member) return null;
-                  return (
-                    <div key={a.id} className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded" style={{ backgroundColor: shift.color }} />
-                      <span className="text-xs text-text-primary truncate">{member.full_name}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          {/* Shifts info */}
+          <ShiftsInfoWidget onOpenConfig={onOpenConfig} />
         </div>
 
         {/* Daily time grid */}

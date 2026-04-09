@@ -22,12 +22,25 @@ const TABS: { id: ConfigTab; label: string; icon: typeof Sliders }[] = [
   { id: "shifts", label: "Turnos", icon: Clock },
 ];
 
-export default function ConfigMenu() {
-  const [open, setOpen] = useState(false);
+interface ConfigMenuProps {
+  externalOpen?: boolean;
+  onExternalOpenChange?: (open: boolean) => void;
+  initialTab?: ConfigTab;
+}
+
+export default function ConfigMenu({ externalOpen, onExternalOpenChange, initialTab }: ConfigMenuProps = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = (v: boolean) => { setInternalOpen(v); onExternalOpenChange?.(v); };
   const [tab, setTab] = useState<ConfigTab>("generation");
   const [slideDir, setSlideDir] = useState<"left" | "right">("right");
   const [animKey, setAnimKey] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  // When opened externally with initialTab, switch to it
+  useEffect(() => {
+    if (externalOpen && initialTab) setTab(initialTab);
+  }, [externalOpen, initialTab]);
 
   const switchTab = (newTab: ConfigTab) => {
     const oldIdx = TABS.findIndex((t) => t.id === tab);

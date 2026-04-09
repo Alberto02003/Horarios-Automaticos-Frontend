@@ -45,6 +45,7 @@ export default function DashboardPage() {
 
   const [showGenerate, setShowGenerate] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showConfig, setShowConfig] = useState(false);
   const [showActivateConfirm, setShowActivateConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showTeam, setShowTeam] = useState(false);
@@ -262,6 +263,7 @@ export default function DashboardPage() {
             onDayClick={(date) => setSelectedDay(date)}
             selectedDay={selectedDay}
             view={calView}
+            onOpenConfig={() => setShowConfig(true)}
           />
         ) : (
           <div className="bg-surface-card rounded-2xl border border-[#F0EDF3] overflow-hidden shadow-xs">
@@ -333,7 +335,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <ConfigMenu />
+            <ConfigMenu externalOpen={showConfig} onExternalOpenChange={setShowConfig} initialTab="shifts" />
             <ProfileMenu />
           </div>
         </div>
