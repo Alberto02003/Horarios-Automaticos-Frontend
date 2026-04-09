@@ -10,7 +10,7 @@ import ShiftsInfoWidget from "@/components/ShiftsInfoWidget";
 import type { Assignment } from "@/types/schedule";
 
 const DAY_HEADERS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-const HOURS = Array.from({ length: 17 }, (_, i) => i + 6); // 06:00 - 22:00
+const HOURS = Array.from({ length: 19 }, (_, i) => i + 6); // 06:00 - 00:00
 
 type CalView = "month" | "week" | "day" | "grid";
 
@@ -392,7 +392,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
               {HOURS.map((hour, i) => (
                 <div key={hour} className="absolute left-0 right-0 border-t border-[#F0EDF3]/60" style={{ top: `${i * ROW_HEIGHT * 1.2}rem` }}>
                   <div className="text-right pr-2 sm:pr-3 -mt-2">
-                    <span className="text-xs font-medium text-text-tertiary">{String(hour).padStart(2, "0")}:00</span>
+                    <span className="text-xs font-medium text-text-tertiary">{String(hour % 24).padStart(2, "0")}:00</span>
                   </div>
                 </div>
               ))}
@@ -581,7 +581,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
             {HOURS.map((hour, i) => (
               <div key={hour} className="absolute left-0 right-0 border-t border-[#F0EDF3]/60" style={{ top: `${i * ROW_HEIGHT}rem` }}>
                 <div className="absolute left-0 -mt-2 pl-1 sm:pl-2" style={{ width: TIME_COL }}>
-                  <span className="text-[9px] sm:text-[10px] font-medium text-text-tertiary">{String(hour).padStart(2, "0")}:00</span>
+                  <span className="text-[9px] sm:text-[10px] font-medium text-text-tertiary">{String(hour % 24).padStart(2, "0")}:00</span>
                 </div>
               </div>
             ))}
@@ -620,9 +620,11 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
                       const shift = shiftMap[Number(shiftId)];
                       if (!shift) return null;
 
-                      const startMin = timeToMinutes(shift.start_time, 480) - GRID_START * 60;
+                      const gridEndMin = (HOURS.length) * 60; // max grid minutes
+                      const startMin = Math.min(timeToMinutes(shift.start_time, 480) - GRID_START * 60, gridEndMin - 60);
                       let endMin = timeToMinutes(shift.end_time, 960) - GRID_START * 60;
-                      if (endMin <= startMin) endMin = startMin + 480;
+                      if (endMin <= startMin) endMin = startMin + 120; // overnight: show 2h block
+                      endMin = Math.min(endMin, gridEndMin); // cap to grid end
 
                       const topRem = (startMin / 60) * ROW_HEIGHT;
                       const timeHeight = ((endMin - startMin) / 60) * ROW_HEIGHT;
