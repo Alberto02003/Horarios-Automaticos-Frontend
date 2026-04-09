@@ -627,9 +627,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
                       endMin = Math.min(endMin, gridEndMin); // cap to grid end
 
                       const topRem = (startMin / 60) * ROW_HEIGHT;
-                      const timeHeight = ((endMin - startMin) / 60) * ROW_HEIGHT;
-                      const contentHeight = (isMobile ? 0.8 : 1.2) + members_list.length * (isMobile ? 0.7 : 0.95);
-                      const heightRem = Math.max(timeHeight, contentHeight);
+                      const contentHeight = (isMobile ? 1.0 : 1.5) + members_list.length * (isMobile ? 0.85 : 1.1);
 
                       // Side by side if multiple shift groups
                       const totalGroups = shiftGroups.length;
@@ -645,7 +643,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
                           className="absolute rounded-lg px-1 sm:px-2 py-1 sm:py-1.5 overflow-hidden cursor-pointer hover:brightness-95 transition-all"
                           style={{
                             top: `${topRem}rem`,
-                            height: `${heightRem}rem`,
+                            height: `${contentHeight}rem`,
                             left: `${leftPct}%`,
                             width: `${widthPct}%`,
                             backgroundColor: shift.color + "15",
