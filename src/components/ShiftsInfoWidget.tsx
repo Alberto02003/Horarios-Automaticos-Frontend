@@ -12,7 +12,7 @@ export default function ShiftsInfoWidget({ onOpenConfig }: Props) {
   const active = (shiftTypes || []).filter((s) => s.is_active);
 
   return (
-    <div className="bg-surface-card rounded-xl border border-[#F0EDF3] p-4">
+    <div className="bg-surface-card rounded-xl border border-[#F0EDF3] p-4 h-[100px] overflow-auto">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-bold text-text-primary">Turnos</h3>
         {onOpenConfig && (
