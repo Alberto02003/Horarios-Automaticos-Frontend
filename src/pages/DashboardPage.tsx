@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Calendar, Download, Sparkles, CheckCircle, Trash2, LayoutGrid, CalendarDays, CalendarClock, CalendarRange, CalendarPlus, Home, FileEdit, CheckCircle2, Users, Clock } from "lucide-react";
+import { Calendar, Download, Sparkles, CheckCircle, Trash2, LayoutGrid, CalendarDays, CalendarClock, CalendarRange, CalendarPlus, Plus, Home, FileEdit, CheckCircle2, Users, Clock } from "lucide-react";
 import CatPaws from "@/components/CatPaws";
 import ProfileMenu from "@/components/ProfileMenu";
 import ConfigMenu from "@/components/ConfigMenu";
@@ -12,7 +12,9 @@ import ShiftsModal from "@/components/ShiftsModal";
 import GenerateDialog from "@/components/GenerateDialog";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Tooltip from "@/components/ui/Tooltip";
-import { usePeriods, useActivatePeriod, useDeletePeriod, useValidation } from "@/api/schedule";
+import Modal from "@/components/ui/Modal";
+import SelectUI from "@/components/ui/Select";
+import { usePeriods, useCreatePeriod, useActivatePeriod, useDeletePeriod, useValidation } from "@/api/schedule";
 import { useMembers } from "@/api/members";
 import { useShiftTypes } from "@/api/shiftTypes";
 import { useToast } from "@/components/ui/ToastProvider";
@@ -31,13 +33,16 @@ export default function DashboardPage() {
   const [calView, setCalView] = useState<CalView>("week");
 
   const [showGenerate, setShowGenerate] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showActivateConfirm, setShowActivateConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showTeam, setShowTeam] = useState(false);
   const [showShifts, setShowShifts] = useState(false);
 
+  const createPeriod = useCreatePeriod();
   const activatePeriod = useActivatePeriod();
   const deletePeriod = useDeletePeriod();
+  const [newMonth, setNewMonth] = useState(new Date().getMonth() + 1);
   const { toast } = useToast();
 
   const now = new Date();
@@ -57,6 +62,28 @@ export default function DashboardPage() {
   const calendarPeriod = browsePeriod || currentMonthPeriod;
 
   useValidation(calendarPeriod?.id ?? null);
+
+  const MONTH_NAMES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+  const monthOptions = MONTH_NAMES.map((m, i) => ({ value: String(i + 1), label: m }));
+
+  const handleCreatePeriod = () => {
+    const existing = periods?.find((p) => p.year === currentYear && p.month === newMonth && p.status === "active");
+    if (existing) {
+      toast(`Ya existe un periodo activo para ${MONTH_NAMES[newMonth - 1]} ${currentYear}. Eliminalo primero.`, "error");
+      return;
+    }
+    const days = new Date(currentYear, newMonth, 0).getDate();
+    const start = `${currentYear}-${String(newMonth).padStart(2, "0")}-01`;
+    const end = `${currentYear}-${String(newMonth).padStart(2, "0")}-${String(days).padStart(2, "0")}`;
+    const name = `${MONTH_NAMES[newMonth - 1]} ${currentYear}`;
+    createPeriod.mutate(
+      { name, year: currentYear, month: newMonth, start_date: start, end_date: end },
+      {
+        onSuccess: (period) => { setBrowsePeriod(period); setPage("calendar"); setShowCreateModal(false); },
+        onError: (err) => { toast(err instanceof Error ? err.message : "Error al crear", "error"); },
+      },
+    );
+  };
 
   const handleExportExcel = async (period: SchedulePeriod) => {
     const token = localStorage.getItem("token");
@@ -305,7 +332,9 @@ export default function DashboardPage() {
             <>
               <span className="text-xs text-text-tertiary">Sin horario activo este mes</span>
               <div className="w-px h-6 bg-[#F0EDF3]" />
-              <PeriodSelector selected={null} onSelect={(p) => { setBrowsePeriod(p); setPage("calendar"); }} />
+              <button onClick={() => setShowCreateModal(true)} className="btn-pastel-lilac text-[11px] px-3 py-1.5 rounded-xl">
+                <Plus size={13} /> Nuevo
+              </button>
             </>
           )}
         </div>
@@ -320,6 +349,29 @@ export default function DashboardPage() {
       <GenerateDialog periodId={calendarPeriod?.id ?? 0} open={showGenerate && !!calendarPeriod} onOpenChange={setShowGenerate} />
       <ConfirmDialog open={showActivateConfirm} onOpenChange={setShowActivateConfirm} title="Activar periodo" description="No se podran editar las asignaciones." onConfirm={handleActivate} confirmLabel="Activar" variant="warning" />
       <ConfirmDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm} title="Eliminar periodo" description={`Se eliminara "${calendarPeriod?.name}" y todas sus asignaciones.`} onConfirm={handleDelete} confirmLabel="Eliminar" variant="danger" />
+
+      <Modal open={showCreateModal} onOpenChange={setShowCreateModal} title="Nuevo horario">
+        <div className="space-y-5">
+          <div className="flex items-center gap-3 p-4 rounded-2xl bg-p-lavender-light/40 border border-p-lavender/30">
+            <CalendarPlus size={20} className="text-text-tertiary shrink-0" />
+            <p className="text-sm text-text-secondary">Selecciona el mes para crear un nuevo periodo.</p>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Mes</label>
+            <SelectUI value={String(newMonth)} onValueChange={(val) => setNewMonth(Number(val))} options={monthOptions} placeholder="Seleccionar mes" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Año</label>
+            <div className="input-pastel flex items-center justify-center text-sm font-medium text-text-primary">{currentYear}</div>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button onClick={handleCreatePeriod} disabled={createPeriod.isPending} className="btn-primary flex-1 rounded-xl">
+              {createPeriod.isPending ? "Creando..." : "Crear horario"}
+            </button>
+            <button onClick={() => setShowCreateModal(false)} className="btn-secondary flex-1 rounded-xl">Cancelar</button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
