@@ -184,6 +184,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
 
   const ROW_HEIGHT = 3.5; // rem per hour
   const GRID_START = 6; // 06:00
+  const CAL_HEIGHT = "calc(100vh - 200px)"; // consistent height across views
 
   // Day navigation
   const prevDay = () => {
@@ -255,13 +256,13 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
     return (
       <div className="flex gap-6">
         {/* Sidebar for monthly view */}
-        <div className="w-[240px] shrink-0 flex flex-col gap-3" style={{ maxHeight: "calc(100vh - 180px)" }}>
+        <div className="w-[240px] shrink-0 flex flex-col gap-3" style={{ maxHeight: CAL_HEIGHT }}>
           {!isActive && dragCtx && <DragMembersPanel />}
           <div className="flex-1 min-h-0 overflow-auto">
             <ShiftsInfoWidget onOpenConfig={onOpenConfig} />
           </div>
         </div>
-        <div className="flex-1 min-w-0 bg-surface-card rounded-xl border border-[#F0EDF3] overflow-auto" style={{ maxHeight: "calc(100vh - 180px)" }}>
+        <div className="flex-1 min-w-0 bg-surface-card rounded-xl border border-[#F0EDF3] overflow-auto" style={{ maxHeight: CAL_HEIGHT }}>
         {/* Month header */}
         <div className="px-5 py-4 border-b border-[#F0EDF3] flex items-center justify-between">
           <h2 className="text-lg font-extrabold text-text-primary tracking-tight">
@@ -345,7 +346,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
     return (
       <div className="flex gap-6">
         {/* Left sidebar (same mini-cal) */}
-        <div className="w-[240px] shrink-0 flex flex-col gap-3" style={{ maxHeight: "calc(100vh - 180px)" }}>
+        <div className="w-[240px] shrink-0 flex flex-col gap-3" style={{ maxHeight: CAL_HEIGHT }}>
           <div className="bg-surface-card rounded-xl border border-[#F0EDF3] p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-text-primary">{MONTHS_FULL[periodStart.getMonth()]} {periodStart.getFullYear()}</h3>
@@ -402,7 +403,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
             {viewToggle}
           </div>
 
-          <div className="bg-surface-card rounded-xl border border-[#F0EDF3] overflow-auto" style={{ maxHeight: "calc(100vh - 200px)" }}>
+          <div className="bg-surface-card rounded-xl border border-[#F0EDF3] overflow-auto" style={{ maxHeight: CAL_HEIGHT }}>
             <div className="relative" style={{ height: `${HOURS.length * ROW_HEIGHT * 1.2}rem` }}>
               {/* Hour lines */}
               {HOURS.map((hour, i) => (
@@ -501,7 +502,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
   return (
     <div className="flex gap-6">
       {/* Left sidebar */}
-      <div className="w-[240px] shrink-0 flex flex-col gap-3" style={{ maxHeight: "calc(100vh - 180px)" }}>
+      <div className="w-[240px] shrink-0 flex flex-col gap-3" style={{ maxHeight: CAL_HEIGHT }}>
         <div className="bg-surface-card rounded-xl border border-[#F0EDF3] p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-text-primary">{MONTHS_FULL[periodStart.getMonth()]} {periodStart.getFullYear()}</h3>
@@ -578,7 +579,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
         </div>
 
         {/* Time grid */}
-        <div className="bg-surface-card rounded-b-xl border border-t-0 border-[#F0EDF3] overflow-auto" style={{ maxHeight: "calc(100vh - 200px)" }}>
+        <div className="bg-surface-card rounded-b-xl border border-t-0 border-[#F0EDF3] overflow-auto" style={{ maxHeight: CAL_HEIGHT }}>
           <div className="relative" style={{ height: `${HOURS.length * ROW_HEIGHT}rem` }}>
             {/* Hour lines */}
             {HOURS.map((hour, i) => (
