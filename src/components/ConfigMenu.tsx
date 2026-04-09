@@ -69,7 +69,7 @@ export default function ConfigMenu({ externalOpen, onExternalOpenChange, initial
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-text-primary/20 backdrop-blur-sm animate-fade-in" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 bg-surface-card rounded-2xl w-full max-w-xl max-h-[85vh] shadow-lg border border-[#F0EDF3] animate-scale-in focus:outline-none flex flex-col">
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 bg-surface-card rounded-2xl w-[calc(100%-2rem)] sm:w-full max-w-xl max-h-[85vh] shadow-lg border border-[#F0EDF3] animate-scale-in focus:outline-none flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between p-5 border-b border-[#F0EDF3] shrink-0">
               <Dialog.Title className="text-lg font-bold text-text-primary tracking-tight">Configuracion</Dialog.Title>
@@ -92,7 +92,7 @@ export default function ConfigMenu({ externalOpen, onExternalOpenChange, initial
             </div>
 
             {/* Content — swipeable, fixed height */}
-            <div ref={contentRef} className="h-[450px] overflow-auto p-5" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+            <div ref={contentRef} className="h-[calc(70vh-100px)] sm:h-[450px] overflow-auto p-4 sm:p-5" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
               <div
                 key={animKey}
                 style={{ animation: `${slideDir === "right" ? "tab-slide-in" : "tab-slide-out"} 0.2s ease-out` }}
@@ -166,7 +166,7 @@ function GenerationTab() {
     <div className="space-y-5">
       <div>
         <h3 className="text-[10px] font-semibold text-text-tertiary uppercase tracking-wide mb-3">General</h3>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div><label className="block text-[10px] text-text-tertiary mb-1">Horas/sem</label><input type="number" value={weeklyLimit} onChange={(e) => setWeeklyLimit(e.target.value)} className="input-pastel text-xs py-1.5" /></div>
           <div><label className="block text-[10px] text-text-tertiary mb-1">Descanso (h)</label><input type="number" value={minRest} onChange={(e) => setMinRest(e.target.value)} className="input-pastel text-xs py-1.5" /></div>
           <div><label className="block text-[10px] text-text-tertiary mb-1">Max dias</label><input type="number" value={maxConsecutive} onChange={(e) => setMaxConsecutive(e.target.value)} className="input-pastel text-xs py-1.5" /></div>
@@ -297,7 +297,7 @@ function ShiftsTab() {
       <ConfirmDialog open={!!confirmDelete} onOpenChange={(o) => { if (!o) setConfirmDelete(null); }} title="Desactivar turno" description={`Se desactivara "${confirmDelete?.name}".`} onConfirm={handleDelete} confirmLabel="Desactivar" variant="warning" />
 
       {isLoading ? <p className="text-xs text-text-tertiary">Cargando...</p> : (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {shiftTypes?.map((st) => (
             <div key={st.id} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#F0EDF3] group hover:shadow-xs transition-all">
               <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-xs shrink-0" style={{ backgroundColor: st.color }}>{st.code}</div>

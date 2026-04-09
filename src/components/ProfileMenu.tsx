@@ -43,7 +43,7 @@ export default function ProfileMenu() {
           <DropdownMenu.Content
             align="end"
             sideOffset={8}
-            className="z-50 bg-surface-card rounded-xl border border-[#F0EDF3] shadow-lg p-1 w-[260px] animate-scale-in"
+            className="z-50 bg-surface-card rounded-xl border border-[#F0EDF3] shadow-lg p-1 w-[220px] sm:w-[260px] animate-scale-in"
           >
             {/* Profile info */}
             <div className="px-3 py-3 flex items-center gap-3">

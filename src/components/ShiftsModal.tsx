@@ -42,7 +42,7 @@ export default function ShiftsModal({ open, onOpenChange }: Props) {
       <Dialog.Root open={open} onOpenChange={onOpenChange}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-text-primary/20 backdrop-blur-sm animate-fade-in" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 bg-surface-card rounded-2xl w-full max-w-2xl max-h-[80vh] shadow-lg border border-[#F0EDF3] animate-scale-in focus:outline-none flex flex-col">
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 bg-surface-card rounded-2xl w-[calc(100%-2rem)] sm:w-full max-w-2xl max-h-[80vh] shadow-lg border border-[#F0EDF3] animate-scale-in focus:outline-none flex flex-col">
             <div className="flex items-center justify-between p-6 border-b border-[#F0EDF3] shrink-0">
               <div>
                 <Dialog.Title className="text-lg font-bold text-text-primary tracking-tight">Tipos de Turno</Dialog.Title>
@@ -57,7 +57,7 @@ export default function ShiftsModal({ open, onOpenChange }: Props) {
               {isLoading ? <p className="text-text-tertiary text-sm p-4">Cargando...</p> : !shiftTypes?.length ? (
                 <p className="text-center text-text-tertiary py-12">Sin turnos</p>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {shiftTypes.map((st) => (
                     <div key={st.id} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[#F0EDF3] group hover:shadow-xs transition-all">
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-xs shrink-0" style={{ backgroundColor: st.color }}>

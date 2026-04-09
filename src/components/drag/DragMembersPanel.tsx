@@ -38,7 +38,7 @@ export default function DragMembersPanel({ onOpenConfig }: Props) {
   };
 
   return (
-    <div className="bg-surface-card rounded-xl border border-[#F0EDF3] h-[200px] flex flex-col">
+    <div className="bg-surface-card rounded-xl border border-[#F0EDF3] h-[150px] sm:h-[200px] flex flex-col">
       <div className="flex items-center justify-between px-3 pt-3 pb-1 shrink-0">
         <h3 className="text-[10px] font-semibold text-text-tertiary uppercase tracking-wide">Equipo</h3>
         {onOpenConfig && (

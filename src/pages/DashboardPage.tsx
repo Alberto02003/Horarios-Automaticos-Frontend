@@ -133,8 +133,8 @@ export default function DashboardPage() {
 
   // ─── HOME PAGE ───
   const renderHome = () => (
-    <div className="px-6 py-6 max-w-5xl mx-auto">
-      <div className="grid grid-cols-4 gap-4 mb-8">
+    <div className="px-4 sm:px-6 py-4 sm:py-6 max-w-5xl mx-auto">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
         {[
           { icon: Users, label: "Miembros", value: activeMembers.length, color: "bg-p-blue-light text-blue-600", onClick: () => setShowTeam(true) },
           { icon: Clock, label: "Turnos", value: activeShifts.length, color: "bg-p-lilac/30 text-purple-600", onClick: () => setShowShifts(true) },
@@ -142,11 +142,11 @@ export default function DashboardPage() {
           { icon: CheckCircle2, label: "Activos", value: activeCurrentYear.length, color: "bg-p-mint-light text-green-600", onClick: undefined },
         ].map((s) => (
           <button key={s.label} onClick={s.onClick} disabled={!s.onClick}
-            className={`flex items-center gap-3 px-5 py-4 rounded-2xl border border-[#F0EDF3] bg-surface-card transition-all text-left ${s.onClick ? "hover:shadow-sm hover:-translate-y-0.5 cursor-pointer" : "cursor-default"}`}
+            className={`flex items-center gap-2.5 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4 rounded-2xl border border-[#F0EDF3] bg-surface-card transition-all text-left ${s.onClick ? "hover:shadow-sm hover:-translate-y-0.5 cursor-pointer" : "cursor-default"}`}
           >
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${s.color}`}><s.icon size={18} /></div>
+            <div className={`w-8 sm:w-10 h-8 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${s.color}`}><s.icon size={16} /></div>
             <div>
-              <p className="text-2xl font-extrabold text-text-primary tracking-tight leading-none">{s.value}</p>
+              <p className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight leading-none">{s.value}</p>
               <p className="text-[10px] font-medium text-text-tertiary uppercase tracking-wide mt-0.5">{s.label}</p>
             </div>
           </button>
@@ -215,11 +215,11 @@ export default function DashboardPage() {
   const isDraft = calendarPeriod?.status === "draft";
 
   const renderCalendarInner = () => (
-    <div className="px-6 py-5">
+    <div className="px-3 sm:px-6 py-3 sm:py-5">
       {/* Calendar toolbar: period selector (left) + view toggle (right) */}
       {calendarPeriod && (
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <PeriodSelector selected={calendarPeriod} onSelect={setBrowsePeriod} showAll />
             <span className={`text-[9px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-xl ${
               calendarPeriod.status === "active" ? "bg-p-mint text-green-800" : "bg-p-yellow/50 text-amber-700"
@@ -309,28 +309,28 @@ export default function DashboardPage() {
 
       {/* Top bar */}
       <header className="sticky top-0 z-30 backdrop-blur-md bg-surface/80 border-b border-[#F0EDF3]/60">
-        <div className="flex items-center justify-between px-6 h-14">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-p-pink flex items-center justify-center">
-              <Calendar size={15} className="text-text-primary" />
+        <div className="flex items-center justify-between px-3 sm:px-6 h-12 sm:h-14">
+          <div className="flex items-center gap-2">
+            <div className="w-7 sm:w-8 h-7 sm:h-8 rounded-xl bg-p-pink flex items-center justify-center">
+              <Calendar size={14} className="text-text-primary" />
             </div>
-            <span className="text-[15px] font-bold text-text-primary tracking-tight">Horarios</span>
+            <span className="text-sm sm:text-[15px] font-bold text-text-primary tracking-tight hidden sm:inline">Horarios</span>
           </div>
 
-          <div className="flex items-center gap-1 bg-[#F0EDF3]/50 rounded-xl p-1">
+          <div className="flex items-center gap-0.5 sm:gap-1 bg-[#F0EDF3]/50 rounded-xl p-0.5 sm:p-1">
             <button onClick={() => setPage("home")}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 page === "home" ? "bg-surface-card shadow-xs text-text-primary" : "text-text-tertiary hover:text-text-secondary"
               }`}
             >
-              <Home size={13} /> Inicio
+              <Home size={13} /> <span className="hidden sm:inline">Inicio</span>
             </button>
             <button onClick={() => setPage("calendar")}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 page === "calendar" ? "bg-surface-card shadow-xs text-text-primary" : "text-text-tertiary hover:text-text-secondary"
               }`}
             >
-              <CalendarDays size={13} /> Calendario
+              <CalendarDays size={13} /> <span className="hidden sm:inline">Calendario</span>
             </button>
           </div>
 
@@ -352,8 +352,8 @@ export default function DashboardPage() {
       </div>
 
       {/* Floating bottom bar */}
-      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40">
-        <div className="flex items-center gap-3 bg-surface-card/95 backdrop-blur-lg border border-[#F0EDF3] rounded-2xl shadow-lg px-5 py-3">
+      <div className="fixed bottom-3 sm:bottom-5 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] sm:w-auto">
+        <div className="flex items-center justify-center gap-2 sm:gap-3 bg-surface-card/95 backdrop-blur-lg border border-[#F0EDF3] rounded-2xl shadow-lg px-3 sm:px-5 py-2.5 sm:py-3">
           {currentMonthPeriod ? (
             <>
               <button onClick={() => { setBrowsePeriod(null); setPage("calendar"); }} className="flex items-center gap-2 hover:opacity-80 transition-opacity">

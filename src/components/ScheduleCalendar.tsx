@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback } from "react";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { ChevronLeft, ChevronRight, CalendarRange, CalendarDays, CalendarClock, LayoutGrid } from "lucide-react";
 import { useMembers } from "@/api/members";
 import { useShiftTypes } from "@/api/shiftTypes";
@@ -165,9 +166,12 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
 
   const MONTHS_FULL = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
-  const ROW_HEIGHT = 3.5; // rem per hour
+  const isMobile = useIsMobile();
+  const ROW_HEIGHT = isMobile ? 2.5 : 3.5; // rem per hour
   const GRID_START = 6; // 06:00
-  const CAL_HEIGHT = "650px"; // consistent height across views
+  const CAL_HEIGHT = isMobile ? "calc(100vh - 220px)" : "650px";
+  const SIDEBAR_W = isMobile ? "w-full" : "w-[240px]";
+  const TIME_COL = isMobile ? "40px" : "50px";
 
   // Day navigation
   const prevDay = () => {
@@ -239,7 +243,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
     return (
       <div className="flex gap-6">
         {/* Sidebar for monthly view */}
-        <div className="w-[240px] shrink-0 flex flex-col gap-3" style={{ maxHeight: CAL_HEIGHT }}>
+        <div className="hidden lg:flex lg:w-[240px] shrink-0 flex-col gap-3" style={{ maxHeight: CAL_HEIGHT }}>
           {!isActive && dragCtx && <DragMembersPanel onOpenConfig={onOpenConfig} />}
           <ShiftsInfoWidget onOpenConfig={onOpenConfig} />
         </div>
@@ -281,7 +285,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
                   onDragOver={(e) => day.inMonth && handleDragOver(e, day.date)}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => day.inMonth && handleDrop(e, day.date)}
-                  className={`min-h-[90px] p-1.5 border-r border-[#F0EDF3] last:border-r-0 transition-colors ${
+                  className={`min-h-[60px] sm:min-h-[90px] p-1.5 border-r border-[#F0EDF3] last:border-r-0 transition-colors ${
                     !day.inMonth ? "opacity-30" : ""
                   } ${isWeekend ? "bg-p-lavender-light/15" : ""
                   } ${day.inMonth && !isActive ? "cursor-pointer hover:bg-p-pink-light/20" : ""
@@ -327,7 +331,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
     return (
       <div className="flex gap-6">
         {/* Left sidebar (same mini-cal) */}
-        <div className="w-[240px] shrink-0 flex flex-col gap-3" style={{ maxHeight: CAL_HEIGHT }}>
+        <div className="hidden lg:flex lg:w-[240px] shrink-0 flex-col gap-3" style={{ maxHeight: CAL_HEIGHT }}>
           <div className="bg-surface-card rounded-xl border border-[#F0EDF3] p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-text-primary">{MONTHS_FULL[periodStart.getMonth()]} {periodStart.getFullYear()}</h3>
@@ -387,7 +391,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
               {/* Hour lines */}
               {HOURS.map((hour, i) => (
                 <div key={hour} className="absolute left-0 right-0 border-t border-[#F0EDF3]/60" style={{ top: `${i * ROW_HEIGHT * 1.2}rem` }}>
-                  <div className="w-[60px] text-right pr-3 -mt-2">
+                  <div className="text-right pr-2 sm:pr-3 -mt-2">
                     <span className="text-xs font-medium text-text-tertiary">{String(hour).padStart(2, "0")}:00</span>
                   </div>
                 </div>
@@ -396,7 +400,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
               {/* Assignment blocks — grouped by shift type */}
               <div
                 className={`absolute inset-0 transition-colors ${dragCtx?.highlightedDate === currentDayStr ? "bg-p-mint-light/30 ring-2 ring-inset ring-p-mint rounded-lg" : ""}`}
-                style={{ marginLeft: "70px" }}
+                style={{ marginLeft: isMobile ? "45px" : "70px" }}
                 onDragOver={(e) => handleDragOver(e, currentDayStr)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, currentDayStr)}
@@ -494,7 +498,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
   return (
     <div className="flex gap-6">
       {/* Left sidebar */}
-      <div className="w-[240px] shrink-0 flex flex-col gap-3" style={{ maxHeight: CAL_HEIGHT }}>
+      <div className="hidden lg:flex lg:w-[240px] shrink-0 flex-col gap-3" style={{ maxHeight: CAL_HEIGHT }}>
         <div className="bg-surface-card rounded-xl border border-[#F0EDF3] p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-text-primary">{MONTHS_FULL[periodStart.getMonth()]} {periodStart.getFullYear()}</h3>
@@ -554,7 +558,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
         <div className="flex flex-col bg-surface-card rounded-xl border border-[#F0EDF3] overflow-hidden" style={{ height: CAL_HEIGHT }}>
         {/* Day headers */}
         <div className="shrink-0 border-b border-[#F0EDF3]">
-          <div className="grid" style={{ gridTemplateColumns: "50px repeat(7, 1fr)" }}>
+          <div className="grid" style={{ gridTemplateColumns: `${TIME_COL} repeat(7, 1fr)` }}>
             <div />
             {weekDates.map((date, i) => {
               const d = new Date(date + "T00:00:00");
@@ -576,14 +580,14 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
             {/* Hour lines */}
             {HOURS.map((hour, i) => (
               <div key={hour} className="absolute left-0 right-0 border-t border-[#F0EDF3]/60" style={{ top: `${i * ROW_HEIGHT}rem` }}>
-                <div className="w-[50px] text-right pr-2 -mt-2">
+                <div className="text-right pr-1 sm:pr-2 -mt-2">
                   <span className="text-[10px] font-medium text-text-tertiary">{String(hour).padStart(2, "0")}:00</span>
                 </div>
               </div>
             ))}
 
             {/* Column backgrounds */}
-            <div className="absolute inset-0 pointer-events-none" style={{ display: "grid", gridTemplateColumns: "50px repeat(7, 1fr)" }}>
+            <div className="absolute inset-0 pointer-events-none" style={{ display: "grid", gridTemplateColumns: `${TIME_COL} repeat(7, 1fr)` }}>
               <div />
               {weekDates.map((date) => (
                 <div key={date} className={`border-l border-[#F0EDF3]/60 ${date === selectedDay ? "bg-p-pink-light/15" : date === today ? "bg-p-blue-light/10" : ""}`} />
@@ -591,7 +595,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
             </div>
 
             {/* Assignment blocks — grouped by shift type */}
-            <div className="absolute inset-0" style={{ display: "grid", gridTemplateColumns: "50px repeat(7, 1fr)" }}>
+            <div className="absolute inset-0" style={{ display: "grid", gridTemplateColumns: `${TIME_COL} repeat(7, 1fr)` }}>
               <div />
               {weekDates.map((date) => {
                 const dayAsgn = assignmentsByDate[date] || [];

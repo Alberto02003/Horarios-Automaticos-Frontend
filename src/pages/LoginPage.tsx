@@ -36,7 +36,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-surface relative flex items-center justify-center">
       <CatPaws />
 
-      <div className="relative z-10 w-full max-w-md px-6">
+      <div className="relative z-10 w-full max-w-md px-4 sm:px-6">
         {/* Logo */}
         <div className="flex items-center gap-3 justify-center mb-10">
           <div className="w-12 h-12 rounded-2xl bg-p-pink flex items-center justify-center">
@@ -49,7 +49,7 @@ export default function LoginPage() {
         </div>
 
         {/* Card */}
-        <div className="bg-surface-card rounded-2xl border border-[#F0EDF3] shadow-lg p-8">
+        <div className="bg-surface-card rounded-2xl border border-[#F0EDF3] shadow-lg p-5 sm:p-8">
           <h2 className="text-xl font-extrabold text-text-primary tracking-tight text-center">Bienvenida</h2>
           <p className="text-sm text-text-secondary text-center mt-1 mb-6">Inicia sesion para continuar</p>
 
