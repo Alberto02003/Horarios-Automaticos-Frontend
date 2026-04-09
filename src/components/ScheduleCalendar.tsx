@@ -184,7 +184,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
 
   const ROW_HEIGHT = 3.5; // rem per hour
   const GRID_START = 6; // 06:00
-  const CAL_HEIGHT = "calc(100vh - 200px)"; // consistent height across views
+  const CAL_HEIGHT = "800px"; // consistent height across views
 
   // Day navigation
   const prevDay = () => {
