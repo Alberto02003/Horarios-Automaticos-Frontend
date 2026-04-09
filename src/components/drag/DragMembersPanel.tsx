@@ -34,8 +34,8 @@ export default function DragMembersPanel() {
   };
 
   return (
-    <div className="w-[200px] shrink-0 space-y-3">
-      <div className="bg-surface-card rounded-2xl border border-[#F0EDF3] p-3">
+    <div>
+      <div className="bg-surface-card rounded-xl border border-[#F0EDF3] p-3">
         <h3 className="text-[10px] font-semibold text-text-tertiary uppercase tracking-wide mb-2 px-1">Equipo</h3>
 
         <div className="relative mb-2 w-full">
@@ -71,12 +71,6 @@ export default function DragMembersPanel() {
             <p className="text-[10px] text-text-tertiary text-center py-3">Sin resultados</p>
           )}
         </div>
-      </div>
-
-      <div className="px-2">
-        <p className="text-[9px] text-text-tertiary leading-relaxed">
-          Arrastra un miembro al calendario para asignarle un turno
-        </p>
       </div>
     </div>
   );
