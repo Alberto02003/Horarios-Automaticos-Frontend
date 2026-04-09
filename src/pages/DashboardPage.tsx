@@ -1,6 +1,9 @@
 import { useState, useMemo } from "react";
 import { Calendar, Download, Sparkles, CheckCircle, Trash2, LayoutGrid, CalendarDays, CalendarClock, CalendarRange, CalendarPlus, Plus, Home, FileEdit, CheckCircle2, Users, Clock } from "lucide-react";
 import CatPaws from "@/components/CatPaws";
+import { DragProvider } from "@/components/drag/DragContext";
+import DragMembersPanel from "@/components/drag/DragMembersPanel";
+import ShiftPickerPopover from "@/components/drag/ShiftPickerPopover";
 import ProfileMenu from "@/components/ProfileMenu";
 import ConfigMenu from "@/components/ConfigMenu";
 import PeriodSelector from "@/components/PeriodSelector";
@@ -200,7 +203,10 @@ export default function DashboardPage() {
   );
 
   // ─── CALENDAR PAGE ───
-  const renderCalendar = () => (
+  const isDraft = calendarPeriod?.status === "draft";
+  const showDragPanel = isDraft && (calView === "week" || calView === "day");
+
+  const renderCalendarInner = () => (
     <div className="px-6 py-5">
       {/* Calendar toolbar: period selector (left) + view toggle (right) */}
       {calendarPeriod && (
@@ -241,15 +247,20 @@ export default function DashboardPage() {
 
       {calendarPeriod ? (
         calView === "month" || calView === "week" || calView === "day" ? (
-          <ScheduleCalendar
-            periodId={calendarPeriod.id}
-            startDate={calendarPeriod.start_date}
-            endDate={calendarPeriod.end_date}
-            isActive={calendarPeriod.status === "active"}
-            onDayClick={(date) => setSelectedDay(date)}
-            selectedDay={selectedDay}
-            view={calView}
-          />
+          <div className={showDragPanel ? "flex gap-4" : ""}>
+            {showDragPanel && <DragMembersPanel />}
+            <div className="flex-1 min-w-0">
+              <ScheduleCalendar
+                periodId={calendarPeriod.id}
+                startDate={calendarPeriod.start_date}
+                endDate={calendarPeriod.end_date}
+                isActive={calendarPeriod.status === "active"}
+                onDayClick={(date) => setSelectedDay(date)}
+                selectedDay={selectedDay}
+                view={calView}
+              />
+            </div>
+          </div>
         ) : (
           <div className="bg-surface-card rounded-2xl border border-[#F0EDF3] overflow-hidden shadow-xs">
             <ScheduleGrid
@@ -271,6 +282,13 @@ export default function DashboardPage() {
       )}
     </div>
   );
+
+  const renderCalendar = () => isDraft ? (
+    <DragProvider>
+      {renderCalendarInner()}
+      {calendarPeriod && <ShiftPickerPopover periodId={calendarPeriod.id} />}
+    </DragProvider>
+  ) : renderCalendarInner();
 
   return (
     <div className="min-h-screen bg-surface relative">

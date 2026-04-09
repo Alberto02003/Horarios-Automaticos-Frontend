@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { ChevronLeft, ChevronRight, CalendarRange, CalendarDays, CalendarClock, LayoutGrid } from "lucide-react";
 import { useMembers } from "@/api/members";
 import { useShiftTypes } from "@/api/shiftTypes";
 import { useAssignments } from "@/api/schedule";
+import { useDrag, type DragPayload } from "@/components/drag/DragContext";
 import type { Assignment } from "@/types/schedule";
 
 const DAY_HEADERS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
@@ -55,9 +56,36 @@ function timeToMinutes(timeStr: string | null, fallback: number): number {
 const DAY_NAMES_FULL = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
 
 export default function ScheduleCalendar({ periodId, startDate, endDate, isActive, onDayClick, selectedDay, view = "week", onViewChange }: Props) {
+
   const { data: members } = useMembers();
   const { data: shiftTypes } = useShiftTypes();
   const { data: assignments } = useAssignments(periodId);
+  const dragCtx = useDrag();
+
+  // Drop zone handlers
+  const handleDragOver = useCallback((e: React.DragEvent, date: string) => {
+    if (isActive) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+    dragCtx?.setHighlightedDate(date);
+  }, [isActive, dragCtx]);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    const related = e.relatedTarget as Node | null;
+    if (related && e.currentTarget.contains(related)) return;
+    dragCtx?.setHighlightedDate(null);
+  }, [dragCtx]);
+
+  const handleDrop = useCallback((e: React.DragEvent, date: string) => {
+    e.preventDefault();
+    dragCtx?.setHighlightedDate(null);
+    try {
+      const data = e.dataTransfer.getData("application/json");
+      const payload: DragPayload = JSON.parse(data);
+      if (payload.type === "move-assignment" && payload.sourceDate === date) return;
+      dragCtx?.setDropResult({ date, payload, x: e.clientX, y: e.clientY });
+    } catch { /* ignore invalid drops */ }
+  }, [dragCtx]);
 
   const periodStart = new Date(startDate + "T00:00:00");
   const periodEnd = new Date(endDate + "T00:00:00");
@@ -383,7 +411,13 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
               ))}
 
               {/* Assignment blocks — grouped by shift type */}
-              <div className="absolute inset-0" style={{ marginLeft: "70px" }}>
+              <div
+                className={`absolute inset-0 transition-colors ${dragCtx?.highlightedDate === currentDayStr ? "bg-p-mint-light/30 ring-2 ring-inset ring-p-mint rounded-lg" : ""}`}
+                style={{ marginLeft: "70px" }}
+                onDragOver={(e) => handleDragOver(e, currentDayStr)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, currentDayStr)}
+              >
                 {(() => {
                   // Group by shift type
                   const groups: Record<number, Assignment[]> = {};
@@ -576,6 +610,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
               <div />
               {weekDates.map((date) => {
                 const dayAsgn = assignmentsByDate[date] || [];
+                const isDropTarget = dragCtx?.highlightedDate === date;
                 // Group by shift type
                 const groups: Record<number, Assignment[]> = {};
                 dayAsgn.forEach((a) => {
@@ -585,7 +620,13 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
                 const shiftGroups = Object.entries(groups);
 
                 return (
-                  <div key={date} className="relative">
+                  <div
+                    key={date}
+                    className={`relative transition-colors ${isDropTarget ? "bg-p-mint-light/40 ring-2 ring-inset ring-p-mint rounded-lg" : ""}`}
+                    onDragOver={(e) => handleDragOver(e, date)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, date)}
+                  >
                     {shiftGroups.map(([shiftId, members_list], gIdx) => {
                       const shift = shiftMap[Number(shiftId)];
                       if (!shift) return null;
