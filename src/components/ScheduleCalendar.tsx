@@ -260,7 +260,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
           {!isActive && dragCtx && <DragMembersPanel />}
           <ShiftsInfoWidget onOpenConfig={onOpenConfig} />
         </div>
-        <div className="flex-1 min-w-0 bg-surface-card rounded-xl border border-[#F0EDF3] overflow-auto" style={{ maxHeight: CAL_HEIGHT }}>
+        <div className="flex-1 min-w-0 bg-surface-card rounded-xl border border-[#F0EDF3] overflow-auto" style={{ height: CAL_HEIGHT }}>
         {/* Month header */}
         <div className="px-5 py-4 border-b border-[#F0EDF3] flex items-center justify-between">
           <h2 className="text-lg font-extrabold text-text-primary tracking-tight">
@@ -399,7 +399,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
             {viewToggle}
           </div>
 
-          <div className="bg-surface-card rounded-xl border border-[#F0EDF3] overflow-auto" style={{ maxHeight: CAL_HEIGHT }}>
+          <div className="bg-surface-card rounded-xl border border-[#F0EDF3] overflow-auto" style={{ height: CAL_HEIGHT }}>
             <div className="relative" style={{ height: `${HOURS.length * ROW_HEIGHT * 1.2}rem` }}>
               {/* Hour lines */}
               {HOURS.map((hour, i) => (
@@ -554,8 +554,10 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
           {viewToggle}
         </div>
 
+        {/* Calendar container — fixed height */}
+        <div className="flex flex-col bg-surface-card rounded-xl border border-[#F0EDF3] overflow-hidden" style={{ height: CAL_HEIGHT }}>
         {/* Day headers */}
-        <div className="bg-surface-card rounded-t-xl border border-b-0 border-[#F0EDF3]">
+        <div className="shrink-0 border-b border-[#F0EDF3]">
           <div className="grid" style={{ gridTemplateColumns: "50px repeat(7, 1fr)" }}>
             <div />
             {weekDates.map((date, i) => {
@@ -573,7 +575,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
         </div>
 
         {/* Time grid */}
-        <div className="bg-surface-card rounded-b-xl border border-t-0 border-[#F0EDF3] overflow-auto" style={{ maxHeight: CAL_HEIGHT }}>
+        <div className="flex-1 overflow-auto">
           <div className="relative" style={{ height: `${HOURS.length * ROW_HEIGHT}rem` }}>
             {/* Hour lines */}
             {HOURS.map((hour, i) => (
@@ -671,6 +673,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
               })}
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>
