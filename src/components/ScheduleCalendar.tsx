@@ -4,6 +4,7 @@ import { useMembers } from "@/api/members";
 import { useShiftTypes } from "@/api/shiftTypes";
 import { useAssignments } from "@/api/schedule";
 import { useDrag, type DragPayload } from "@/components/drag/DragContext";
+import DragMembersPanel from "@/components/drag/DragMembersPanel";
 import type { Assignment } from "@/types/schedule";
 
 const DAY_HEADERS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
@@ -250,7 +251,14 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
     }
 
     return (
-      <div className="bg-surface-card rounded-xl border border-[#F0EDF3] overflow-hidden">
+      <div className="flex gap-6">
+        {/* Sidebar for monthly view */}
+        {!isActive && dragCtx && (
+          <div className="w-[200px] shrink-0">
+            <DragMembersPanel />
+          </div>
+        )}
+        <div className="flex-1 min-w-0 bg-surface-card rounded-xl border border-[#F0EDF3] overflow-hidden">
         {/* Month header */}
         <div className="px-5 py-4 border-b border-[#F0EDF3] flex items-center justify-between">
           <h2 className="text-lg font-extrabold text-text-primary tracking-tight">
@@ -280,15 +288,20 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
               const isSelected = day.date === selectedDay;
               const isWeekend = (() => { const d = new Date(day.date + "T00:00:00"); return d.getDay() === 0 || d.getDay() === 6; })();
 
+              const isDropHere = dragCtx?.highlightedDate === day.date;
               return (
                 <div
                   key={day.date}
                   onClick={() => day.inMonth && onDayClick(day.date)}
+                  onDragOver={(e) => day.inMonth && handleDragOver(e, day.date)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => day.inMonth && handleDrop(e, day.date)}
                   className={`min-h-[90px] p-1.5 border-r border-[#F0EDF3] last:border-r-0 transition-colors ${
                     !day.inMonth ? "opacity-30" : ""
                   } ${isWeekend ? "bg-p-lavender-light/15" : ""
                   } ${day.inMonth && !isActive ? "cursor-pointer hover:bg-p-pink-light/20" : ""
-                  } ${isSelected ? "bg-p-pink-light/40 ring-1 ring-inset ring-p-pink-medium" : ""}`}
+                  } ${isSelected ? "bg-p-pink-light/40 ring-1 ring-inset ring-p-pink-medium" : ""
+                  } ${isDropHere ? "bg-p-mint-light/40 ring-2 ring-inset ring-p-mint" : ""}`}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className={`text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full ${
@@ -319,6 +332,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
             })}
           </div>
         ))}
+        </div>
       </div>
     );
   }
@@ -363,6 +377,8 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
               })}
             </div>
           </div>
+
+          {!isActive && dragCtx && <DragMembersPanel />}
 
           {/* Day summary */}
           <div className="bg-surface-card rounded-xl border border-[#F0EDF3] p-4">
@@ -535,6 +551,8 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
             })}
           </div>
         </div>
+
+        {!isActive && dragCtx && <DragMembersPanel />}
 
         <div className="bg-surface-card rounded-xl border border-[#F0EDF3] p-4">
           <h3 className="text-sm font-bold text-text-primary mb-3">Turnos esta semana</h3>

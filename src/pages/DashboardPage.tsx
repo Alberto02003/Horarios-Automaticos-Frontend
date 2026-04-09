@@ -2,7 +2,7 @@ import { useState, useMemo, useRef } from "react";
 import { Calendar, Download, Sparkles, CheckCircle, Trash2, LayoutGrid, CalendarDays, CalendarClock, CalendarRange, CalendarPlus, Plus, Home, FileEdit, CheckCircle2, Users, Clock } from "lucide-react";
 import CatPaws from "@/components/CatPaws";
 import { DragProvider } from "@/components/drag/DragContext";
-import DragMembersPanel from "@/components/drag/DragMembersPanel";
+// DragMembersPanel is now rendered inside ScheduleCalendar sidebar
 import ShiftPickerPopover from "@/components/drag/ShiftPickerPopover";
 import ProfileMenu from "@/components/ProfileMenu";
 import ConfigMenu from "@/components/ConfigMenu";
@@ -204,7 +204,6 @@ export default function DashboardPage() {
 
   // ─── CALENDAR PAGE ───
   const isDraft = calendarPeriod?.status === "draft";
-  const showDragPanel = isDraft && (calView === "week" || calView === "day");
 
   const renderCalendarInner = () => (
     <div className="px-6 py-5">
@@ -247,20 +246,15 @@ export default function DashboardPage() {
 
       {calendarPeriod ? (
         calView === "month" || calView === "week" || calView === "day" ? (
-          <div className={showDragPanel ? "flex gap-4" : ""}>
-            {showDragPanel && <DragMembersPanel />}
-            <div className="flex-1 min-w-0">
-              <ScheduleCalendar
-                periodId={calendarPeriod.id}
-                startDate={calendarPeriod.start_date}
-                endDate={calendarPeriod.end_date}
-                isActive={calendarPeriod.status === "active"}
-                onDayClick={(date) => setSelectedDay(date)}
-                selectedDay={selectedDay}
-                view={calView}
-              />
-            </div>
-          </div>
+          <ScheduleCalendar
+            periodId={calendarPeriod.id}
+            startDate={calendarPeriod.start_date}
+            endDate={calendarPeriod.end_date}
+            isActive={calendarPeriod.status === "active"}
+            onDayClick={(date) => setSelectedDay(date)}
+            selectedDay={selectedDay}
+            view={calView}
+          />
         ) : (
           <div className="bg-surface-card rounded-2xl border border-[#F0EDF3] overflow-hidden shadow-xs">
             <ScheduleGrid
