@@ -1,3 +1,8 @@
+export interface ShiftCoverage {
+  min: number;
+  max: number;
+}
+
 export interface GlobalPreferences {
   id: number;
   general_weekly_hour_limit: number;
@@ -7,6 +12,7 @@ export interface GlobalPreferences {
     allow_weekend_work?: boolean;
     prefer_balanced_distribution?: boolean;
     fill_unassigned_only?: boolean;
+    shift_coverage?: Record<string, ShiftCoverage>; // key = shift_type_id
   };
 }
 

@@ -290,18 +290,24 @@ export default function DashboardPage() {
       <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40">
         <div className="flex items-center gap-3 bg-surface-card/95 backdrop-blur-lg border border-[#F0EDF3] rounded-2xl shadow-lg px-5 py-3">
           {currentMonthPeriod ? (
-            <button onClick={() => { setBrowsePeriod(null); setPage("calendar"); }} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <CalendarDays size={15} className="text-text-secondary" />
-              <span className="text-sm font-semibold text-text-primary">{currentMonthPeriod.name}</span>
-              <span className="text-[9px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-p-mint text-green-800">Activo</span>
-            </button>
+            <>
+              <button onClick={() => { setBrowsePeriod(null); setPage("calendar"); }} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <CalendarDays size={15} className="text-text-secondary" />
+                <span className="text-sm font-semibold text-text-primary">{currentMonthPeriod.name}</span>
+                <span className="text-[9px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-p-mint text-green-800">Activo</span>
+              </button>
+              <div className="w-px h-6 bg-[#F0EDF3]" />
+              <button onClick={() => setShowGenerate(true)} className="btn-pastel-lilac text-[11px] px-3 py-1.5 rounded-xl">
+                <Sparkles size={13} /> Generar
+              </button>
+            </>
           ) : (
-            <span className="text-xs text-text-tertiary">Sin horario activo este mes</span>
+            <>
+              <span className="text-xs text-text-tertiary">Sin horario activo este mes</span>
+              <div className="w-px h-6 bg-[#F0EDF3]" />
+              <PeriodSelector selected={null} onSelect={(p) => { setBrowsePeriod(p); setPage("calendar"); }} />
+            </>
           )}
-          <div className="w-px h-6 bg-[#F0EDF3]" />
-          <button onClick={() => { if (calendarPeriod) setShowGenerate(true); else toast("Selecciona o crea un periodo primero", "error"); }} className="btn-pastel-lilac text-[11px] px-3 py-1.5 rounded-xl">
-            <Sparkles size={13} /> Generar
-          </button>
         </div>
       </div>
 
