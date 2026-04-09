@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Calendar, Download, Sparkles, CheckCircle, Trash2, LayoutGrid, CalendarDays, CalendarClock, CalendarRange, CalendarPlus, Plus, Home, FileEdit, CheckCircle2, Users, Clock } from "lucide-react";
 import CatPaws from "@/components/CatPaws";
 import { DragProvider } from "@/components/drag/DragContext";
@@ -283,6 +283,15 @@ export default function DashboardPage() {
     </div>
   );
 
+  // Swipe between tabs
+  const swipeStart = useRef(0);
+  const handlePageTouchStart = (e: React.TouchEvent) => { swipeStart.current = e.touches[0].clientX; };
+  const handlePageTouchEnd = (e: React.TouchEvent) => {
+    const diff = e.changedTouches[0].clientX - swipeStart.current;
+    if (diff < -80 && page === "home") setPage("calendar");
+    if (diff > 80 && page === "calendar") { setPage("home"); setBrowsePeriod(null); }
+  };
+
   const renderCalendar = () => isDraft ? (
     <DragProvider>
       {renderCalendarInner()}
@@ -328,8 +337,10 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      {/* Page content */}
-      {page === "home" ? renderHome() : renderCalendar()}
+      {/* Page content — swipeable */}
+      <div onTouchStart={handlePageTouchStart} onTouchEnd={handlePageTouchEnd}>
+        {page === "home" ? renderHome() : renderCalendar()}
+      </div>
 
       {/* Floating bottom bar — always visible: active period + generate */}
       <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40">
