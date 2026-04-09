@@ -186,15 +186,13 @@ export default function DashboardPage() {
               {calendarPeriod.status === "active" ? "Activo" : "Borrador"}
             </span>
             {calendarPeriod.status === "draft" && (
-              <>
-                <button onClick={() => setShowActivateConfirm(true)} className="btn-pastel-mint text-[11px] px-3 py-1.5 rounded-xl"><CheckCircle size={13} /> Activar</button>
-                <Tooltip content="Eliminar">
-                  <button onClick={() => setShowDeleteConfirm(true)} className="p-2 rounded-xl hover:bg-p-pink-light transition-colors"><Trash2 size={14} className="text-text-tertiary" /></button>
-                </Tooltip>
-              </>
+              <button onClick={() => setShowActivateConfirm(true)} className="btn-pastel-mint text-[11px] px-3 py-1.5 rounded-xl"><CheckCircle size={13} /> Activar</button>
             )}
             <Tooltip content="Exportar Excel">
               <button onClick={() => handleExportExcel(calendarPeriod)} className="p-2 rounded-xl hover:bg-p-lavender-light transition-colors"><Download size={14} className="text-text-secondary" /></button>
+            </Tooltip>
+            <Tooltip content="Eliminar periodo">
+              <button onClick={() => setShowDeleteConfirm(true)} className="p-2 rounded-xl hover:bg-p-pink-light transition-colors"><Trash2 size={14} className="text-text-tertiary" /></button>
             </Tooltip>
           </div>
           <div className="flex items-center gap-0.5 bg-[#F0EDF3]/50 rounded-xl p-0.5">
