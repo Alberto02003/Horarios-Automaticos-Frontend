@@ -170,7 +170,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
   const ROW_HEIGHT = isMobile ? 2.5 : 3.5; // rem per hour
   const GRID_START = 6; // 06:00
   const CAL_HEIGHT = isMobile ? "calc(100vh - 220px)" : "650px";
-  const SIDEBAR_W = isMobile ? "w-full" : "w-[240px]";
+
   const TIME_COL = isMobile ? "40px" : "50px";
 
   // Day navigation
@@ -633,8 +633,10 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
 
                       // Side by side if multiple shift groups
                       const totalGroups = shiftGroups.length;
-                      const widthPct = totalGroups > 1 ? Math.floor(100 / totalGroups) - 2 : 94;
-                      const leftPct = totalGroups > 1 ? gIdx * Math.floor(100 / totalGroups) + 3 : 3;
+                      const gap = 2;
+                      const colWidth = (100 - gap * 2) / totalGroups;
+                      const widthPct = colWidth - (totalGroups > 1 ? 1 : 0);
+                      const leftPct = gap + gIdx * colWidth;
 
                       return (
                         <div
