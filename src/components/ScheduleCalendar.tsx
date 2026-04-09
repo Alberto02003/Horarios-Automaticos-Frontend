@@ -343,7 +343,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
     return (
       <div className="flex gap-6">
         {/* Left sidebar (same mini-cal) */}
-        <div className="w-[240px] shrink-0 space-y-5">
+        <div className="w-[240px] shrink-0 flex flex-col gap-3" style={{ maxHeight: "calc(100vh - 180px)" }}>
           <div className="bg-surface-card rounded-xl border border-[#F0EDF3] p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-text-primary">{MONTHS_FULL[periodStart.getMonth()]} {periodStart.getFullYear()}</h3>
@@ -382,7 +382,9 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
           {!isActive && dragCtx && <DragMembersPanel />}
 
           {/* Shifts info */}
-          <ShiftsInfoWidget onOpenConfig={onOpenConfig} />
+          <div className="flex-1 min-h-0 overflow-auto">
+            <ShiftsInfoWidget onOpenConfig={onOpenConfig} />
+          </div>
         </div>
 
         {/* Daily time grid */}
@@ -497,7 +499,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
   return (
     <div className="flex gap-6">
       {/* Left sidebar */}
-      <div className="w-[240px] shrink-0 space-y-5">
+      <div className="w-[240px] shrink-0 flex flex-col gap-3" style={{ maxHeight: "calc(100vh - 180px)" }}>
         <div className="bg-surface-card rounded-xl border border-[#F0EDF3] p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-text-primary">{MONTHS_FULL[periodStart.getMonth()]} {periodStart.getFullYear()}</h3>
@@ -537,21 +539,8 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
 
         {!isActive && dragCtx && <DragMembersPanel />}
 
-        <div className="bg-surface-card rounded-xl border border-[#F0EDF3] p-4">
-          <h3 className="text-sm font-bold text-text-primary mb-3">Turnos esta semana</h3>
-          {categorySummary.length === 0 ? (
-            <p className="text-xs text-text-tertiary">Sin asignaciones</p>
-          ) : (
-            <div className="space-y-2.5">
-              {categorySummary.map((cat) => (
-                <div key={cat.name} className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded" style={{ backgroundColor: cat.color }} />
-                  <span className="text-sm text-text-primary flex-1">{cat.name}</span>
-                  <span className="text-xs text-text-tertiary font-medium">{Math.round(cat.hours)}h</span>
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="flex-1 min-h-0 overflow-auto">
+          <ShiftsInfoWidget onOpenConfig={onOpenConfig} />
         </div>
       </div>
 
