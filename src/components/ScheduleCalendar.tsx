@@ -625,10 +625,9 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
                       if (endMin <= startMin) endMin = startMin + 480;
 
                       const topRem = (startMin / 60) * ROW_HEIGHT;
-                      const minHeight = ROW_HEIGHT * 0.8;
-                      const contentHeight = 1.2 + members_list.length * 0.95;
-                      const timeHeight = ((endMin - startMin) / 60) * ROW_HEIGHT;
-                      const heightRem = Math.max(timeHeight, minHeight, contentHeight);
+                      const minHeight = ROW_HEIGHT * 0.7;
+                      const contentHeight = (isMobile ? 0.8 : 1.2) + members_list.length * (isMobile ? 0.7 : 0.95);
+                      const heightRem = Math.max(minHeight, contentHeight);
 
                       // Side by side if multiple shift groups
                       const totalGroups = shiftGroups.length;
