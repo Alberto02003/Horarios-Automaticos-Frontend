@@ -650,8 +650,9 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
                             borderLeft: `${isMobile ? 2 : 3}px solid ${shift.color}`,
                           }}
                         >
-                          <p className="text-[8px] sm:text-[10px] font-bold truncate" style={{ color: shift.color }}>
-                            {shift.code}{!isMobile && ` · ${shift.start_time || "—"}-${shift.end_time || "—"}`}
+                          <p className="text-[8px] sm:text-[10px] font-bold" style={{ color: shift.color }}>
+                            {shift.code}
+                            {shift.start_time && <span className="hidden md:inline font-normal opacity-70"> {shift.start_time}-{shift.end_time}</span>}
                           </p>
                           <div className="mt-0.5 space-y-[1px]">
                             {members_list.map((a) => {
@@ -673,7 +674,7 @@ export default function ScheduleCalendar({ periodId, startDate, endDate, isActiv
                                   className={`flex items-center gap-1 ${canDrag ? "cursor-grab active:cursor-grabbing hover:bg-white/30 rounded" : ""}`}
                                 >
                                   <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full shrink-0" style={{ backgroundColor: m.color_tag }} />
-                                  <span className="text-[8px] sm:text-[10px] truncate text-text-primary">{isMobile ? m.full_name.split(" ")[0] : m.full_name}</span>
+                                  <span className="text-[8px] sm:text-[10px] text-text-primary leading-tight">{isMobile ? m.full_name.split(" ")[0] : m.full_name}</span>
                                   {a.is_locked && <span className="text-[7px] sm:text-[8px]">🔒</span>}
                                 </div>
                               );
