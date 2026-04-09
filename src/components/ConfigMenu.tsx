@@ -25,7 +25,17 @@ const TABS: { id: ConfigTab; label: string; icon: typeof Sliders }[] = [
 export default function ConfigMenu() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<ConfigTab>("generation");
+  const [slideDir, setSlideDir] = useState<"left" | "right">("right");
+  const [animKey, setAnimKey] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  const switchTab = (newTab: ConfigTab) => {
+    const oldIdx = TABS.findIndex((t) => t.id === tab);
+    const newIdx = TABS.findIndex((t) => t.id === newTab);
+    setSlideDir(newIdx > oldIdx ? "right" : "left");
+    setAnimKey((k) => k + 1);
+    setTab(newTab);
+  };
 
   // Swipe support
   const touchStart = useRef<number>(0);
@@ -33,8 +43,8 @@ export default function ConfigMenu() {
   const handleTouchEnd = (e: React.TouchEvent) => {
     const diff = e.changedTouches[0].clientX - touchStart.current;
     const tabIdx = TABS.findIndex((t) => t.id === tab);
-    if (diff < -50 && tabIdx < TABS.length - 1) setTab(TABS[tabIdx + 1].id);
-    if (diff > 50 && tabIdx > 0) setTab(TABS[tabIdx - 1].id);
+    if (diff < -50 && tabIdx < TABS.length - 1) switchTab(TABS[tabIdx + 1].id);
+    if (diff > 50 && tabIdx > 0) switchTab(TABS[tabIdx - 1].id);
   };
 
   return (
@@ -58,8 +68,8 @@ export default function ConfigMenu() {
               {TABS.map((t) => (
                 <button
                   key={t.id}
-                  onClick={() => setTab(t.id)}
-                  className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors ${
+                  onClick={() => switchTab(t.id)}
+                  className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-all duration-200 ${
                     tab === t.id ? "border-text-primary text-text-primary" : "border-transparent text-text-tertiary hover:text-text-secondary"
                   }`}
                 >
@@ -68,11 +78,16 @@ export default function ConfigMenu() {
               ))}
             </div>
 
-            {/* Content — swipeable */}
-            <div ref={contentRef} className="flex-1 overflow-auto p-5" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-              {tab === "generation" && <GenerationTab />}
-              {tab === "members" && <MembersTab />}
-              {tab === "shifts" && <ShiftsTab />}
+            {/* Content — swipeable, fixed height */}
+            <div ref={contentRef} className="h-[450px] overflow-auto p-5" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+              <div
+                key={animKey}
+                style={{ animation: `${slideDir === "right" ? "tab-slide-in" : "tab-slide-out"} 0.2s ease-out` }}
+              >
+                {tab === "generation" && <GenerationTab />}
+                {tab === "members" && <MembersTab />}
+                {tab === "shifts" && <ShiftsTab />}
+              </div>
             </div>
           </Dialog.Content>
         </Dialog.Portal>

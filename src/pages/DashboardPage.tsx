@@ -30,10 +30,18 @@ export default function DashboardPage() {
   const { data: periods } = usePeriods();
   const { data: members } = useMembers();
   const { data: shiftTypes } = useShiftTypes();
-  const [page, setPage] = useState<Page>("home");
+  const [page, setPageRaw] = useState<Page>("home");
+  const [pageSlideDir, setPageSlideDir] = useState<"left" | "right">("right");
+  const [pageAnimKey, setPageAnimKey] = useState(0);
   const [browsePeriod, setBrowsePeriod] = useState<SchedulePeriod | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [calView, setCalView] = useState<CalView>("week");
+
+  const setPage = (newPage: Page) => {
+    setPageSlideDir(newPage === "calendar" ? "right" : "left");
+    setPageAnimKey((k) => k + 1);
+    setPageRaw(newPage);
+  };
 
   const [showGenerate, setShowGenerate] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -331,9 +339,14 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      {/* Page content — swipeable */}
+      {/* Page content — swipeable with animation */}
       <div onTouchStart={handlePageTouchStart} onTouchEnd={handlePageTouchEnd}>
-        {page === "home" ? renderHome() : renderCalendar()}
+        <div
+          key={pageAnimKey}
+          style={{ animation: `${pageSlideDir === "right" ? "tab-slide-in" : "tab-slide-out"} 0.25s ease-out` }}
+        >
+          {page === "home" ? renderHome() : renderCalendar()}
+        </div>
       </div>
 
       {/* Floating bottom bar — always visible: active period + generate */}
