@@ -1,13 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "./client";
 import type { ShiftType, ShiftTypeCreate, ShiftTypeUpdate } from "@/types/shift";
+import type { PaginatedResponse } from "@/types/pagination";
 
 const KEYS = { all: ["shift-types"] as const };
 
 export function useShiftTypes() {
   return useQuery({
     queryKey: KEYS.all,
-    queryFn: () => api.get<ShiftType[]>("/api/shift-types"),
+    queryFn: () => api.get<PaginatedResponse<ShiftType>>("/api/shift-types?page_size=200"),
+    select: (data) => data.items,
   });
 }
 

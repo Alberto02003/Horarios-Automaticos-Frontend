@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "./client";
 import type { SchedulePeriod, PeriodCreate, Assignment, AssignmentCreate, ValidationWarning } from "@/types/schedule";
+import type { PaginatedResponse } from "@/types/pagination";
 
 const KEYS = {
   periods: ["periods"] as const,
@@ -11,7 +12,8 @@ const KEYS = {
 export function usePeriods() {
   return useQuery({
     queryKey: KEYS.periods,
-    queryFn: () => api.get<SchedulePeriod[]>("/api/schedule-periods"),
+    queryFn: () => api.get<PaginatedResponse<SchedulePeriod>>("/api/schedule-periods?page_size=200"),
+    select: (data) => data.items,
   });
 }
 

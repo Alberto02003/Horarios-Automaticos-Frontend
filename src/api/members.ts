@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "./client";
 import type { Member, MemberCreate, MemberUpdate } from "@/types/member";
+import type { PaginatedResponse } from "@/types/pagination";
 
 const KEYS = {
   all: ["members"] as const,
@@ -10,7 +11,8 @@ const KEYS = {
 export function useMembers() {
   return useQuery({
     queryKey: KEYS.all,
-    queryFn: () => api.get<Member[]>("/api/members"),
+    queryFn: () => api.get<PaginatedResponse<Member>>("/api/members?page_size=200"),
+    select: (data) => data.items,
   });
 }
 
