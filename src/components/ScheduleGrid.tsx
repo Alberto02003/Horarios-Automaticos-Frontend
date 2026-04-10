@@ -4,6 +4,7 @@ import { Lock, Unlock } from "lucide-react";
 import { useMembers } from "@/api/members";
 import { useShiftTypes } from "@/api/shiftTypes";
 import { useAssignments, useCreateAssignment, useDeleteAssignment, useToggleLock } from "@/api/schedule";
+import { useShiftMap, useAssignmentMap } from "@/hooks/useMaps";
 import ShiftSelector from "./ShiftSelector";
 import Tooltip from "@/components/ui/Tooltip";
 import type { Assignment } from "@/types/schedule";
@@ -40,12 +41,7 @@ export default function ScheduleGrid({ periodId, startDate, endDate, isActive }:
     return result;
   }, [startDate, endDate]);
 
-  const stMap = useMemo(() => {
-    const map: Record<number, { code: string; color: string; name: string }> = {};
-    shiftTypes?.forEach((st) => { map[st.id] = { code: st.code, color: st.color, name: st.name }; });
-    return map;
-  }, [shiftTypes]);
-
+  const stMap = useShiftMap(shiftTypes);
   const assignmentMap = useMemo(() => {
     const map: Record<string, Assignment> = {};
     assignments?.forEach((a) => { map[`${a.member_id}-${a.date}`] = a; });

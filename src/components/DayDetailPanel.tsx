@@ -4,11 +4,9 @@ import { X, Plus, Lock, Unlock, Trash2 } from "lucide-react";
 import { useMembers } from "@/api/members";
 import { useShiftTypes } from "@/api/shiftTypes";
 import { useAssignments, useCreateAssignment, useDeleteAssignment, useToggleLock } from "@/api/schedule";
+import { useShiftMap, useMemberMap } from "@/hooks/useMaps";
+import { DAYS_FULL, MONTHS_FULL } from "@/constants";
 import Tooltip from "@/components/ui/Tooltip";
-import type { Assignment } from "@/types/schedule";
-
-const DAY_NAMES_FULL = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
-const MONTH_NAMES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
 interface Props {
   open: boolean;
@@ -29,24 +27,15 @@ export default function DayDetailPanel({ open, onOpenChange, periodId, date, isA
   const [addingForMember, setAddingForMember] = useState<number | null>(null);
 
   const d = new Date(date + "T00:00:00");
-  const dayName = DAY_NAMES_FULL[d.getDay()];
-  const monthName = MONTH_NAMES[d.getMonth()];
+  const dayName = DAYS_FULL[d.getDay()];
+  const monthName = MONTHS_FULL[d.getMonth()];
 
   const dayAssignments = useMemo(() => (assignments || []).filter((a) => a.date === date), [assignments, date]);
   const assignedMemberIds = useMemo(() => new Set(dayAssignments.map((a) => a.member_id)), [dayAssignments]);
   const unassignedMembers = useMemo(() => (members || []).filter((m) => m.is_active && !assignedMemberIds.has(m.id)), [members, assignedMemberIds]);
 
-  const shiftMap = useMemo(() => {
-    const map: Record<number, { code: string; color: string; name: string }> = {};
-    shiftTypes?.forEach((s) => { map[s.id] = { code: s.code, color: s.color, name: s.name }; });
-    return map;
-  }, [shiftTypes]);
-
-  const memberMap = useMemo(() => {
-    const map: Record<number, { full_name: string; color_tag: string }> = {};
-    members?.forEach((m) => { map[m.id] = { full_name: m.full_name, color_tag: m.color_tag }; });
-    return map;
-  }, [members]);
+  const shiftMap = useShiftMap(shiftTypes);
+  const memberMap = useMemberMap(members);
 
   const handleAssign = (memberId: number, shiftTypeId: number) => {
     createAssignment.mutate({ member_id: memberId, date, shift_type_id: shiftTypeId });

@@ -1,8 +1,9 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useCallback } from "react";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useMembers } from "@/api/members";
 import { useShiftTypes } from "@/api/shiftTypes";
 import { useAssignments } from "@/api/schedule";
+import { useMemberMap, useShiftMap, useAssignmentsByDate } from "@/hooks/useMaps";
 import { useDrag, type DragPayload } from "@/components/drag/DragContext";
 import { MONTHS_FULL, MONTHS_SHORT, DAYS_SHORT } from "@/constants";
 import type { Assignment } from "@/types/schedule";
@@ -35,27 +36,10 @@ export function useCalendarData(props: CalendarDataProps) {
   const CAL_HEIGHT = isMobile ? "calc(100vh - 220px)" : "650px";
   const TIME_COL = isMobile ? "40px" : "50px";
 
-  // Maps
-  const memberMap = useMemo(() => {
-    const map: Record<number, { full_name: string; color_tag: string }> = {};
-    members?.forEach((m) => { map[m.id] = { full_name: m.full_name, color_tag: m.color_tag }; });
-    return map;
-  }, [members]);
-
-  const shiftMap = useMemo(() => {
-    const map: Record<number, { code: string; color: string; name: string; start_time: string | null; end_time: string | null }> = {};
-    shiftTypes?.forEach((s) => { map[s.id] = { code: s.code, color: s.color, name: s.name, start_time: s.default_start_time, end_time: s.default_end_time }; });
-    return map;
-  }, [shiftTypes]);
-
-  const assignmentsByDate = useMemo(() => {
-    const map: Record<string, Assignment[]> = {};
-    assignments?.forEach((a) => {
-      if (!map[a.date]) map[a.date] = [];
-      map[a.date].push(a);
-    });
-    return map;
-  }, [assignments]);
+  // Maps (from reusable hooks)
+  const memberMap = useMemberMap(members);
+  const shiftMap = useShiftMap(shiftTypes);
+  const assignmentsByDate = useAssignmentsByDate(assignments);
 
   // Mini calendar days
   const miniCalDays = useMemo(() => {
