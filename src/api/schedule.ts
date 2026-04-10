@@ -73,6 +73,42 @@ export function useDeleteAssignment(periodId: number) {
   });
 }
 
+export function useBulkCreateAssignments(periodId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (assignments: AssignmentCreate[]) =>
+      api.post<Assignment[]>(`/api/schedule-periods/${periodId}/assignments/bulk`, { assignments }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEYS.assignments(periodId) });
+      qc.invalidateQueries({ queryKey: KEYS.warnings(periodId) });
+    },
+  });
+}
+
+export function useBulkUpdateAssignments(periodId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { ids: number[]; shift_type_id?: number; is_locked?: boolean }) =>
+      api.put<Assignment[]>(`/api/schedule-periods/${periodId}/assignments/bulk`, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEYS.assignments(periodId) });
+      qc.invalidateQueries({ queryKey: KEYS.warnings(periodId) });
+    },
+  });
+}
+
+export function useBulkDeleteAssignments(periodId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (ids: number[]) =>
+      api.delete(`/api/schedule-periods/${periodId}/assignments/bulk`, { ids }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEYS.assignments(periodId) });
+      qc.invalidateQueries({ queryKey: KEYS.warnings(periodId) });
+    },
+  });
+}
+
 export function useToggleLock(periodId: number) {
   const qc = useQueryClient();
   return useMutation({

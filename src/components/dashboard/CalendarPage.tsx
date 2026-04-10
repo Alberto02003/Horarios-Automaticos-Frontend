@@ -74,9 +74,7 @@ export default function CalendarPage({ calendarPeriod, calView, setCalView, sele
             onOpenConfig={onOpenConfig}
           />
         ) : (
-          <div className="bg-surface-card rounded-2xl border border-[#F0EDF3] overflow-hidden shadow-xs">
-            <ScheduleGrid periodId={calendarPeriod.id} startDate={calendarPeriod.start_date} endDate={calendarPeriod.end_date} isActive={calendarPeriod.status === "active"} />
-          </div>
+          <ScheduleGrid periodId={calendarPeriod.id} startDate={calendarPeriod.start_date} endDate={calendarPeriod.end_date} isActive={calendarPeriod.status === "active"} onOpenConfig={onOpenConfig} />
         )
       ) : (
         <div className="text-center py-24">
