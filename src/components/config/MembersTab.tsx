@@ -39,10 +39,10 @@ export default function MembersTab() {
                 <p className="text-sm font-medium text-text-primary truncate">{m.full_name}</p>
                 <p className="text-[10px] text-text-tertiary">{m.role_name} · {m.weekly_hour_limit}h</p>
               </div>
-              <span className={`w-2 h-2 rounded-full ${m.is_active ? "bg-p-mint" : "bg-[#E0DDE3]"}`} />
+              <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${m.is_active ? "bg-p-mint-light text-green-700" : "bg-[#F0EDF3] text-text-tertiary"}`}>{m.is_active ? "Activo" : "Inactivo"}</span>
               <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Tooltip content="Editar"><button onClick={() => crud.openEdit(m)} className="p-1.5 rounded-lg hover:bg-p-lavender-light"><Pencil size={12} className="text-text-secondary" /></button></Tooltip>
-                {m.is_active && <Tooltip content="Desactivar"><button onClick={() => crud.openDelete(m)} className="p-1.5 rounded-lg hover:bg-p-pink-light"><UserX size={12} className="text-text-secondary" /></button></Tooltip>}
+                <Tooltip content="Editar"><button aria-label="Editar miembro" onClick={() => crud.openEdit(m)} className="p-1.5 rounded-lg hover:bg-p-lavender-light"><Pencil size={12} className="text-text-secondary" /></button></Tooltip>
+                {m.is_active && <Tooltip content="Desactivar"><button aria-label="Desactivar miembro" onClick={() => crud.openDelete(m)} className="p-1.5 rounded-lg hover:bg-p-pink-light"><UserX size={12} className="text-text-secondary" /></button></Tooltip>}
               </div>
             </div>
           ))}

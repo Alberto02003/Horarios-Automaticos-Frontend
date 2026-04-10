@@ -3,6 +3,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { User, LogOut, Camera } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useProfile, useUploadAvatar } from "@/api/auth";
+import { API_BASE } from "@/api/client";
 import { useToast } from "@/components/ui/ToastProvider";
 
 export default function ProfileMenu() {
@@ -12,8 +13,9 @@ export default function ProfileMenu() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8080";
-  const avatarSrc = profile?.avatar_url ? `${apiBase}${profile.avatar_url}` : null;
+  const avatarSrc = profile?.avatar_url
+    ? profile.avatar_url.startsWith("http") ? profile.avatar_url : `${API_BASE}${profile.avatar_url}`
+    : null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -31,7 +33,7 @@ export default function ProfileMenu() {
 
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild>
-          <button className="w-9 h-9 rounded-full overflow-hidden bg-p-pink flex items-center justify-center hover:ring-2 hover:ring-p-pink-medium transition-all focus:outline-none">
+          <button aria-label="Menu de perfil" className="w-9 h-9 rounded-full overflow-hidden bg-p-pink flex items-center justify-center hover:ring-2 hover:ring-p-pink-medium transition-all focus:outline-none">
             {avatarSrc ? (
               <img src={avatarSrc} alt="Avatar" className="w-full h-full object-cover" />
             ) : (

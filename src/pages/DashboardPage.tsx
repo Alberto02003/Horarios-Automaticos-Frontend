@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { CalendarPlus } from "lucide-react";
 import CatPaws from "@/components/CatPaws";
 import TopBar from "@/components/dashboard/TopBar";
@@ -12,10 +12,11 @@ import GenerateDialog from "@/components/GenerateDialog";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Modal from "@/components/ui/Modal";
 import SelectUI from "@/components/ui/Select";
-import { usePeriods, useCreatePeriod, useActivatePeriod, useDeletePeriod, useValidation } from "@/api/schedule";
+import { usePeriods, useValidation } from "@/api/schedule";
 import { useMembers } from "@/api/members";
 import { useShiftTypes } from "@/api/shiftTypes";
-import { useToast } from "@/components/ui/ToastProvider";
+import { useDashboardModals } from "@/hooks/useDashboardModals";
+import { useDashboardActions } from "@/hooks/useDashboardActions";
 import { MONTHS_SHORT } from "@/constants";
 import type { SchedulePeriod } from "@/types/schedule";
 
@@ -23,10 +24,10 @@ type Page = "home" | "calendar";
 type CalView = "month" | "week" | "day" | "grid";
 
 export default function DashboardPage() {
-  const { data: periods } = usePeriods();
-  const { data: members } = useMembers();
-  const { data: shiftTypes } = useShiftTypes();
-  const { toast } = useToast();
+  const { data: periods, isLoading: loadingPeriods } = usePeriods();
+  const { data: members, isLoading: loadingMembers } = useMembers();
+  const { data: shiftTypes, isLoading: loadingShifts } = useShiftTypes();
+  const dataLoading = loadingPeriods || loadingMembers || loadingShifts;
 
   // Page navigation with animation
   const [page, setPageRaw] = useState<Page>("home");
@@ -42,24 +43,19 @@ export default function DashboardPage() {
   const [browsePeriod, setBrowsePeriod] = useState<SchedulePeriod | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [calView, setCalView] = useState<CalView>("week");
+  const [newMonth, setNewMonth] = useState(new Date().getMonth() + 1);
 
-  // Modal state
-  const [showGenerate, setShowGenerate] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showConfig, setShowConfig] = useState(false);
-  const [showActivateConfirm, setShowActivateConfirm] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showTeam, setShowTeam] = useState(false);
-  const [showShifts, setShowShifts] = useState(false);
+  // Modals
+  const modals = useDashboardModals();
 
   // Derived data
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
-  const drafts = (periods || []).filter((p) => p.status === "draft");
-  const activeCurrentYear = (periods || []).filter((p) => p.status === "active" && p.year === currentYear);
-  const activeMembers = (members || []).filter((m) => m.is_active);
-  const activeShiftsArr = (shiftTypes || []).filter((s) => s.is_active);
+  const drafts = useMemo(() => (periods || []).filter((p) => p.status === "draft"), [periods]);
+  const activeCurrentYear = useMemo(() => (periods || []).filter((p) => p.status === "active" && p.year === currentYear), [periods, currentYear]);
+  const activeMembers = useMemo(() => (members || []).filter((m) => m.is_active), [members]);
+  const activeShiftsArr = useMemo(() => (shiftTypes || []).filter((s) => s.is_active), [shiftTypes]);
 
   const currentMonthPeriod = useMemo(() =>
     (periods || []).find((p) => p.status === "active" && p.year === currentYear && p.month === currentMonth) || null
@@ -68,53 +64,16 @@ export default function DashboardPage() {
   const calendarPeriod = browsePeriod || currentMonthPeriod;
   useValidation(calendarPeriod?.id ?? null);
 
-  // Mutations
-  const createPeriod = useCreatePeriod();
-  const activatePeriod = useActivatePeriod();
-  const deletePeriod = useDeletePeriod();
-  const [newMonth, setNewMonth] = useState(currentMonth);
+  // Actions
+  const openPeriod = useCallback((p: SchedulePeriod) => { setBrowsePeriod(p); setPage("calendar"); }, []);
+
+  const actions = useDashboardActions(periods, calendarPeriod, {
+    onPeriodCreated: (p) => { openPeriod(p); modals.setShowCreateModal(false); },
+    onPeriodActivated: () => { setBrowsePeriod(null); modals.setShowActivateConfirm(false); },
+    onPeriodDeleted: () => { setBrowsePeriod(null); modals.setShowDeleteConfirm(false); },
+  });
+
   const monthOptions = MONTHS_SHORT.map((m, i) => ({ value: String(i + 1), label: m }));
-
-  const openPeriod = (p: SchedulePeriod) => { setBrowsePeriod(p); setPage("calendar"); };
-
-  const handleCreatePeriod = () => {
-    const existing = periods?.find((p) => p.year === currentYear && p.month === newMonth && p.status === "active");
-    if (existing) { toast(`Ya existe un periodo activo para ${MONTHS_SHORT[newMonth - 1]} ${currentYear}.`, "error"); return; }
-    const days = new Date(currentYear, newMonth, 0).getDate();
-    const start = `${currentYear}-${String(newMonth).padStart(2, "0")}-01`;
-    const end = `${currentYear}-${String(newMonth).padStart(2, "0")}-${String(days).padStart(2, "0")}`;
-    createPeriod.mutate(
-      { name: `${MONTHS_SHORT[newMonth - 1]} ${currentYear}`, year: currentYear, month: newMonth, start_date: start, end_date: end },
-      { onSuccess: (p) => { openPeriod(p); setShowCreateModal(false); }, onError: (err) => toast(err instanceof Error ? err.message : "Error", "error") },
-    );
-  };
-
-  const handleExportExcel = async (period: SchedulePeriod) => {
-    const token = localStorage.getItem("token");
-    const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8080";
-    try {
-      const res = await fetch(`${apiBase}/api/schedule-periods/${period.id}/export/excel`, { headers: { Authorization: `Bearer ${token}` } });
-      if (!res.ok) throw new Error("Error");
-      const blob = await res.blob(); const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href = url; a.download = `horarios_${period.name.replace(/ /g, "_")}.xlsx`; a.click();
-      URL.revokeObjectURL(url); toast("Excel exportado");
-    } catch { toast("Error al exportar", "error"); }
-  };
-
-  const handleActivate = () => {
-    if (!calendarPeriod) return;
-    activatePeriod.mutate(calendarPeriod.id, {
-      onSuccess: () => { setBrowsePeriod(null); setShowActivateConfirm(false); toast("Periodo activado"); },
-      onError: (err) => { setShowActivateConfirm(false); toast(err instanceof Error ? err.message : "Error", "error"); },
-    });
-  };
-
-  const handleDelete = () => {
-    if (!calendarPeriod) return;
-    deletePeriod.mutate(calendarPeriod.id, {
-      onSuccess: () => { setBrowsePeriod(null); setShowDeleteConfirm(false); toast("Periodo eliminado"); },
-    });
-  };
 
   // Swipe
   const swipeStart = useRef(0);
@@ -128,37 +87,36 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-surface relative">
       <CatPaws />
-      <TopBar page={page} setPage={setPage} showConfig={showConfig} setShowConfig={setShowConfig} />
+      <TopBar page={page} setPage={setPage} showConfig={modals.showConfig} setShowConfig={modals.setShowConfig} />
 
       <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
         <div key={pageAnimKey} style={{ animation: `${pageSlideDir === "right" ? "tab-slide-in" : "tab-slide-out"} 0.25s ease-out` }}>
           {page === "home" ? (
             <HomePage drafts={drafts} activeCurrentYear={activeCurrentYear} activeMembers={activeMembers} activeShifts={activeShiftsArr}
-              currentYear={currentYear} onOpenPeriod={openPeriod} onOpenTeam={() => setShowTeam(true)} onOpenShifts={() => setShowShifts(true)} />
+              currentYear={currentYear} onOpenPeriod={openPeriod} onOpenTeam={() => modals.setShowTeam(true)} onOpenShifts={() => modals.setShowShifts(true)} loading={dataLoading} />
           ) : (
             <CalendarPage calendarPeriod={calendarPeriod} calView={calView} setCalView={setCalView}
               selectedDay={selectedDay} setSelectedDay={setSelectedDay} setBrowsePeriod={setBrowsePeriod}
-              onActivate={() => setShowActivateConfirm(true)} onDelete={() => setShowDeleteConfirm(true)}
-              onExportExcel={handleExportExcel} onOpenConfig={() => setShowConfig(true)} />
+              onActivate={() => modals.setShowActivateConfirm(true)} onDelete={() => modals.setShowDeleteConfirm(true)}
+              onExportExcel={actions.handleExportExcel} onOpenConfig={() => modals.setShowConfig(true)} />
           )}
         </div>
       </div>
 
       <FloatingBar currentMonthPeriod={currentMonthPeriod} browsePeriod={browsePeriod}
         setPage={setPage} setBrowsePeriod={setBrowsePeriod}
-        onGenerate={() => setShowGenerate(true)} onCreateNew={() => setShowCreateModal(true)} />
+        onGenerate={() => modals.setShowGenerate(true)} onCreateNew={() => modals.setShowCreateModal(true)} />
 
-      {/* Modals */}
       {selectedDay && calendarPeriod && (
         <DayDetailPanel open={!!selectedDay} onOpenChange={(o) => { if (!o) setSelectedDay(null); }} periodId={calendarPeriod.id} date={selectedDay} isActive={calendarPeriod.status === "active"} />
       )}
-      <TeamModal open={showTeam} onOpenChange={setShowTeam} />
-      <ShiftsModal open={showShifts} onOpenChange={setShowShifts} />
-      <GenerateDialog periodId={calendarPeriod?.id ?? 0} open={showGenerate && !!calendarPeriod} onOpenChange={setShowGenerate} />
-      <ConfirmDialog open={showActivateConfirm} onOpenChange={setShowActivateConfirm} title="Activar periodo" description="No se podran editar las asignaciones." onConfirm={handleActivate} confirmLabel="Activar" variant="warning" />
-      <ConfirmDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm} title="Eliminar periodo" description={`Se eliminara "${calendarPeriod?.name}" y todas sus asignaciones.`} onConfirm={handleDelete} confirmLabel="Eliminar" variant="danger" />
+      <TeamModal open={modals.showTeam} onOpenChange={modals.setShowTeam} />
+      <ShiftsModal open={modals.showShifts} onOpenChange={modals.setShowShifts} />
+      <GenerateDialog periodId={calendarPeriod?.id ?? 0} open={modals.showGenerate && !!calendarPeriod} onOpenChange={modals.setShowGenerate} />
+      <ConfirmDialog open={modals.showActivateConfirm} onOpenChange={modals.setShowActivateConfirm} title="Activar periodo" description="No se podran editar las asignaciones." onConfirm={actions.handleActivate} confirmLabel="Activar" variant="warning" />
+      <ConfirmDialog open={modals.showDeleteConfirm} onOpenChange={modals.setShowDeleteConfirm} title="Eliminar periodo" description={`Se eliminara "${calendarPeriod?.name}" y todas sus asignaciones.`} onConfirm={actions.handleDelete} confirmLabel="Eliminar" variant="danger" />
 
-      <Modal open={showCreateModal} onOpenChange={setShowCreateModal} title="Nuevo horario">
+      <Modal open={modals.showCreateModal} onOpenChange={modals.setShowCreateModal} title="Nuevo horario">
         <div className="space-y-5">
           <div className="flex items-center gap-3 p-4 rounded-2xl bg-p-lavender-light/40 border border-p-lavender/30">
             <CalendarPlus size={20} className="text-text-tertiary shrink-0" />
@@ -173,8 +131,8 @@ export default function DashboardPage() {
             <div className="input-pastel flex items-center justify-center text-sm font-medium text-text-primary">{currentYear}</div>
           </div>
           <div className="flex gap-3 pt-2">
-            <button onClick={handleCreatePeriod} disabled={createPeriod.isPending} className="btn-primary flex-1 rounded-xl">{createPeriod.isPending ? "Creando..." : "Crear horario"}</button>
-            <button onClick={() => setShowCreateModal(false)} className="btn-secondary flex-1 rounded-xl">Cancelar</button>
+            <button onClick={() => actions.handleCreatePeriod(newMonth)} disabled={actions.isCreating} className="btn-primary flex-1 rounded-xl">{actions.isCreating ? "Creando..." : "Crear horario"}</button>
+            <button onClick={() => modals.setShowCreateModal(false)} className="btn-secondary flex-1 rounded-xl">Cancelar</button>
           </div>
         </div>
       </Modal>

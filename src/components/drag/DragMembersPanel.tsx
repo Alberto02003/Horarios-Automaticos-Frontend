@@ -25,7 +25,7 @@ export default function DragMembersPanel({ onOpenConfig }: Props) {
       memberName: name,
       memberColor: color,
     };
-    e.dataTransfer.setData("application/json", JSON.stringify(payload));
+    e.dataTransfer.setData("text/plain", "drag");
     e.dataTransfer.effectAllowed = "copy";
     setDraggingId(memberId);
     dragCtx?.setDragPayload(payload);

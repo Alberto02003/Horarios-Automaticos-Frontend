@@ -18,6 +18,7 @@ export default function ShiftTypeForm({ shiftType, onSubmit, onCancel, loading }
   const [endTime, setEndTime] = useState("");
   const [countsAsWork, setCountsAsWork] = useState(true);
   const [color, setColor] = useState(PRESET_COLORS[0]);
+  const timeError = startTime && endTime && endTime <= startTime ? "La hora fin debe ser posterior a la hora inicio" : "";
 
   useEffect(() => {
     if (shiftType) {
@@ -33,6 +34,7 @@ export default function ShiftTypeForm({ shiftType, onSubmit, onCancel, loading }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (timeError) return;
     onSubmit({
       code: code.trim().toUpperCase(),
       name: name.trim(),
@@ -70,6 +72,7 @@ export default function ShiftTypeForm({ shiftType, onSubmit, onCancel, loading }
           <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="input-pastel" />
         </div>
       </div>
+      {timeError && <p className="text-xs text-red-500 -mt-3">{timeError}</p>}
       <label className="flex items-center gap-2.5 p-3 rounded-xl hover:bg-p-lavender-light/50 transition-colors cursor-pointer">
         <input type="checkbox" checked={countsAsWork} onChange={(e) => setCountsAsWork(e.target.checked)} className="rounded border-p-pink text-p-pink-deep focus:ring-p-pink-medium" />
         <span className="text-sm text-text-primary">Cuenta como tiempo de trabajo</span>
@@ -91,7 +94,7 @@ export default function ShiftTypeForm({ shiftType, onSubmit, onCancel, loading }
         </div>
       </div>
       <div className="flex gap-3 pt-2">
-        <button type="submit" disabled={loading} className="btn-primary flex-1">
+        <button type="submit" disabled={loading || !!timeError} className="btn-primary flex-1">
           {loading ? "Guardando..." : shiftType ? "Actualizar" : "Crear"}
         </button>
         <button type="button" onClick={onCancel} className="btn-secondary flex-1">

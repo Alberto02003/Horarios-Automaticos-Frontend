@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import DragMembersPanel from "@/components/drag/DragMembersPanel";
 import ShiftsInfoWidget from "@/components/ShiftsInfoWidget";
 import type { CalendarData } from "./useCalendarData";
@@ -13,29 +14,33 @@ export default function MonthView({ data, viewToggle }: Props) {
 
   const year = periodStart.getFullYear();
   const month = periodStart.getMonth();
-  const firstOfMonth = new Date(year, month, 1);
-  const lastOfMonth = new Date(year, month + 1, 0);
-  const startDow = firstOfMonth.getDay() === 0 ? 6 : firstOfMonth.getDay() - 1;
 
-  const calDays: { date: string; day: number; inMonth: boolean }[] = [];
-  for (let i = startDow - 1; i >= 0; i--) {
-    const d = new Date(year, month, -i);
-    calDays.push({ day: d.getDate(), date: d.toISOString().slice(0, 10), inMonth: false });
-  }
-  for (let i = 1; i <= lastOfMonth.getDate(); i++) {
-    const d = new Date(year, month, i);
-    calDays.push({ day: i, date: d.toISOString().slice(0, 10), inMonth: true });
-  }
-  const trailing = 7 - (calDays.length % 7);
-  if (trailing < 7) {
-    for (let i = 1; i <= trailing; i++) {
-      const d = new Date(year, month + 1, i);
-      calDays.push({ day: i, date: d.toISOString().slice(0, 10), inMonth: false });
+  const calWeeks = useMemo(() => {
+    const firstOfMonth = new Date(year, month, 1);
+    const lastOfMonth = new Date(year, month + 1, 0);
+    const startDow = firstOfMonth.getDay() === 0 ? 6 : firstOfMonth.getDay() - 1;
+
+    const calDays: { date: string; day: number; inMonth: boolean }[] = [];
+    for (let i = startDow - 1; i >= 0; i--) {
+      const d = new Date(year, month, -i);
+      calDays.push({ day: d.getDate(), date: d.toISOString().slice(0, 10), inMonth: false });
     }
-  }
+    for (let i = 1; i <= lastOfMonth.getDate(); i++) {
+      const d = new Date(year, month, i);
+      calDays.push({ day: i, date: d.toISOString().slice(0, 10), inMonth: true });
+    }
+    const trailing = 7 - (calDays.length % 7);
+    if (trailing < 7) {
+      for (let i = 1; i <= trailing; i++) {
+        const d = new Date(year, month + 1, i);
+        calDays.push({ day: i, date: d.toISOString().slice(0, 10), inMonth: false });
+      }
+    }
 
-  const calWeeks: typeof calDays[] = [];
-  for (let i = 0; i < calDays.length; i += 7) calWeeks.push(calDays.slice(i, i + 7));
+    const weeks: typeof calDays[] = [];
+    for (let i = 0; i < calDays.length; i += 7) weeks.push(calDays.slice(i, i + 7));
+    return weeks;
+  }, [year, month]);
 
   return (
     <div className="flex gap-6">
@@ -43,7 +48,7 @@ export default function MonthView({ data, viewToggle }: Props) {
         {!isActive && dragCtx && <DragMembersPanel onOpenConfig={onOpenConfig} />}
         <ShiftsInfoWidget onOpenConfig={onOpenConfig} />
       </div>
-      <div className="flex-1 min-w-0 bg-surface-card rounded-xl border border-[#F0EDF3] overflow-auto" style={{ height: CAL_HEIGHT }}>
+      <div role="grid" aria-label={`Calendario ${MONTHS_FULL[month]} ${year}`} className="flex-1 min-w-0 bg-surface-card rounded-xl border border-[#F0EDF3] overflow-auto" style={{ height: CAL_HEIGHT }}>
         <div className="px-5 py-4 border-b border-[#F0EDF3] flex items-center justify-between">
           <h2 className="text-lg font-extrabold text-text-primary tracking-tight">{MONTHS_FULL[month]} {year}</h2>
           <div className="flex items-center gap-3">
@@ -51,13 +56,13 @@ export default function MonthView({ data, viewToggle }: Props) {
             {viewToggle}
           </div>
         </div>
-        <div className="grid grid-cols-7 border-b border-[#F0EDF3]">
+        <div role="row" className="grid grid-cols-7 border-b border-[#F0EDF3]">
           {["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"].map((h, i) => (
-            <div key={h} className={`px-2 py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider ${i >= 5 ? "text-purple-400 bg-p-lavender-light/30" : "text-text-tertiary"}`}>{h}</div>
+            <div key={h} role="columnheader" className={`px-2 py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider ${i >= 5 ? "text-purple-400 bg-p-lavender-light/30" : "text-text-tertiary"}`}>{h}</div>
           ))}
         </div>
         {calWeeks.map((week, wi) => (
-          <div key={wi} className="grid grid-cols-7 border-b border-[#F0EDF3] last:border-b-0">
+          <div key={wi} role="row" className="grid grid-cols-7 border-b border-[#F0EDF3] last:border-b-0">
             {week.map((day) => {
               const dayAsgn = assignmentsByDate[day.date] || [];
               const isToday = day.date === today;
@@ -65,7 +70,7 @@ export default function MonthView({ data, viewToggle }: Props) {
               const isWeekend = (() => { const d = new Date(day.date + "T00:00:00"); return d.getDay() === 0 || d.getDay() === 6; })();
               const isDropHere = dragCtx?.highlightedDate === day.date;
               return (
-                <div key={day.date} onClick={() => day.inMonth && onDayClick(day.date)}
+                <div key={day.date} role="gridcell" aria-label={`${day.day} ${MONTHS_FULL[month]}`} onClick={() => day.inMonth && onDayClick(day.date)}
                   onDragOver={(e) => day.inMonth && handleDragOver(e, day.date)} onDragLeave={handleDragLeave} onDrop={(e) => day.inMonth && handleDrop(e, day.date)}
                   className={`min-h-[60px] sm:min-h-[90px] p-1.5 border-r border-[#F0EDF3] last:border-r-0 transition-colors ${!day.inMonth ? "opacity-30" : ""} ${isWeekend ? "bg-p-lavender-light/15" : ""} ${day.inMonth && !isActive ? "cursor-pointer hover:bg-p-pink-light/20" : ""} ${isSelected ? "bg-p-pink-light/40 ring-1 ring-inset ring-p-pink-medium" : ""} ${isDropHere ? "bg-p-mint-light/40 ring-2 ring-inset ring-p-mint" : ""}`}
                 >

@@ -55,6 +55,7 @@ function ScheduleGridInner({ periodId, startDate, endDate, isActive, onOpenConfi
   const [bulkShiftOpen, setBulkShiftOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dropHighlight, setDropHighlight] = useState<string | null>(null);
+  const [focusedCell, setFocusedCell] = useState<string | null>(null);
   const dragStart = useRef<string | null>(null);
   const cellRefs = useRef<Record<string, HTMLTableCellElement | null>>({});
 
@@ -169,6 +170,55 @@ function ScheduleGridInner({ periodId, startDate, endDate, isActive, onOpenConfi
     setBulkShiftOpen(false);
   }, []);
 
+  // --- Keyboard navigation ---
+  const getCellCoords = useCallback((key: string): [number, number] | null => {
+    if (!members) return null;
+    const [memberId, ...dateParts] = key.split("-");
+    const date = dateParts.join("-");
+    const mi = members.findIndex((m) => m.id === Number(memberId));
+    const di = dates.indexOf(date);
+    return mi >= 0 && di >= 0 ? [mi, di] : null;
+  }, [members, dates]);
+
+  const getKeyFromCoords = useCallback((mi: number, di: number): string | null => {
+    if (!members || mi < 0 || mi >= members.length || di < 0 || di >= dates.length) return null;
+    return `${members[mi].id}-${dates[di]}`;
+  }, [members, dates]);
+
+  const handleCellKeyDown = useCallback((key: string, e: React.KeyboardEvent) => {
+    if (isActive) return;
+    const coords = getCellCoords(key);
+    if (!coords) return;
+    const [mi, di] = coords;
+
+    let targetKey: string | null = null;
+
+    switch (e.key) {
+      case "ArrowRight": targetKey = getKeyFromCoords(mi, di + 1); break;
+      case "ArrowLeft": targetKey = getKeyFromCoords(mi, di - 1); break;
+      case "ArrowDown": targetKey = getKeyFromCoords(mi + 1, di); break;
+      case "ArrowUp": targetKey = getKeyFromCoords(mi - 1, di); break;
+      case " ":
+      case "Enter":
+        e.preventDefault();
+        toggleCell(key, e.shiftKey || e.ctrlKey || e.metaKey);
+        return;
+      case "Escape":
+        clearSelection();
+        return;
+      default: return;
+    }
+
+    if (!targetKey) return;
+    e.preventDefault();
+    setFocusedCell(targetKey);
+    cellRefs.current[targetKey]?.focus();
+
+    if (e.shiftKey) {
+      toggleCell(targetKey, true);
+    }
+  }, [isActive, getCellCoords, getKeyFromCoords, toggleCell, clearSelection]);
+
   // --- Bulk actions ---
   const handleBulkShift = (shiftTypeId: number) => {
     if (selectedIds.length > 0) {
@@ -191,24 +241,30 @@ function ScheduleGridInner({ periodId, startDate, endDate, isActive, onOpenConfi
 
   const handleBulkDelete = () => {
     if (selectedIds.length === 0) return;
-    bulkDelete.mutate(selectedIds, { onSuccess: clearSelection });
+    bulkDelete.mutate(selectedIds, { onSuccess: clearSelection, onError: clearSelection });
   };
 
   const handleBulkLock = (lock: boolean) => {
     if (selectedIds.length === 0) return;
-    bulkUpdate.mutate({ ids: selectedIds, is_locked: lock }, { onSuccess: clearSelection });
+    bulkUpdate.mutate({ ids: selectedIds, is_locked: lock }, { onSuccess: clearSelection, onError: clearSelection });
   };
 
   const memberHours = useMemo(() => {
     const hours: Record<number, number> = {};
     assignments?.forEach((a) => {
-      const st = shiftTypes?.find((s) => s.id === a.shift_type_id);
+      const st = stMap[a.shift_type_id];
       if (st?.counts_as_work_time) {
-        hours[a.member_id] = (hours[a.member_id] || 0) + 8;
+        let h = 8;
+        if (st.start_time && st.end_time) {
+          const [sh, sm] = st.start_time.split(":").map(Number);
+          const [eh, em] = st.end_time.split(":").map(Number);
+          h = Math.max((eh * 60 + em - sh * 60 - sm) / 60, 0);
+        }
+        hours[a.member_id] = (hours[a.member_id] || 0) + h;
       }
     });
     return hours;
-  }, [assignments, shiftTypes]);
+  }, [assignments, stMap]);
 
   // --- Drag & drop from members panel ---
   const handleDragOver = useCallback((e: React.DragEvent, memberId: number, date: string) => {
@@ -229,20 +285,9 @@ function ScheduleGridInner({ periodId, startDate, endDate, isActive, onOpenConfi
     setDropHighlight(null);
     dragCtx?.setHighlightedDate(null);
 
-    // Read payload from drag data
-    try {
-      const raw = e.dataTransfer.getData("application/json");
-      if (!raw) return;
-      const payload = JSON.parse(raw);
-      // For grid: we know the exact member+date, so create directly instead of showing ShiftPickerPopover
-      // But we still use the popover flow for shift selection
-      dragCtx?.setDropResult({ date, payload: { ...payload, memberId }, x: e.clientX, y: e.clientY });
-    } catch {
-      // fallback: use context payload
-      if (dragCtx?.dragPayload) {
-        dragCtx.setDropResult({ date, payload: { ...dragCtx.dragPayload, memberId }, x: e.clientX, y: e.clientY });
-      }
-    }
+    const payload = dragCtx?.dragPayload;
+    if (!payload) return;
+    dragCtx?.setDropResult({ date, payload: { ...payload, memberId }, x: e.clientX, y: e.clientY });
   }, [dragCtx]);
 
   return (
@@ -297,7 +342,7 @@ function ScheduleGridInner({ periodId, startDate, endDate, isActive, onOpenConfi
       )}
 
       <div className="overflow-x-auto">
-        <table className="text-xs border-collapse w-full select-none">
+        <table role="grid" aria-label="Tabla de asignaciones" className="text-xs border-collapse w-full select-none">
           <thead>
             <tr>
               <th className="sticky left-0 z-10 bg-surface px-4 py-3 text-left text-[10px] font-semibold text-text-tertiary uppercase tracking-wide border-b border-[#F0EDF3] min-w-[160px]">
@@ -351,12 +396,17 @@ function ScheduleGridInner({ periodId, startDate, endDate, isActive, onOpenConfi
                     <td
                       key={d}
                       ref={(el) => { cellRefs.current[key] = el; }}
+                      tabIndex={!isActive ? 0 : undefined}
+                      role={!isActive ? "gridcell" : undefined}
+                      aria-selected={isSelected}
                       onMouseDown={(e) => handleCellMouseDown(key, e)}
                       onMouseEnter={() => handleCellMouseEnter(key)}
+                      onKeyDown={(e) => handleCellKeyDown(key, e)}
+                      onFocus={() => setFocusedCell(key)}
                       onDragOver={(e) => handleDragOver(e, member.id, d)}
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, member.id, d)}
-                      className={`px-0.5 py-0.5 border-b border-[#F0EDF3]/60 text-center transition-colors ${
+                      className={`px-0.5 py-0.5 border-b border-[#F0EDF3]/60 text-center transition-colors outline-none focus:ring-2 focus:ring-p-blue focus:ring-inset ${
                         isWeekend ? "bg-p-lavender-light/30" : ""
                       } ${!isActive ? "cursor-pointer hover:bg-p-pink-light/40" : ""} ${
                         isSelected ? "!bg-p-pink-light/50 ring-1 ring-inset ring-p-pink-medium" : ""

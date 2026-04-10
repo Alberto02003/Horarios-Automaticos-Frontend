@@ -23,12 +23,12 @@ export default function TopBar({ page, setPage, showConfig, setShowConfig }: Pro
         </div>
 
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-0.5 sm:gap-1 bg-[#F0EDF3]/50 rounded-xl p-0.5 sm:p-1">
-          <button onClick={() => setPage("home")}
+          <button onClick={() => setPage("home")} aria-label="Inicio"
             className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${page === "home" ? "bg-surface-card shadow-xs text-text-primary" : "text-text-tertiary hover:text-text-secondary"}`}
           >
             <Home size={13} /> <span className="hidden sm:inline">Inicio</span>
           </button>
-          <button onClick={() => setPage("calendar")}
+          <button onClick={() => setPage("calendar")} aria-label="Calendario"
             className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${page === "calendar" ? "bg-surface-card shadow-xs text-text-primary" : "text-text-tertiary hover:text-text-secondary"}`}
           >
             <CalendarDays size={13} /> <span className="hidden sm:inline">Calendario</span>

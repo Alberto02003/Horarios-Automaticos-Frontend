@@ -54,7 +54,19 @@ export function useCreateAssignment(periodId: number) {
   return useMutation({
     mutationFn: (data: AssignmentCreate) =>
       api.post<Assignment>(`/api/schedule-periods/${periodId}/assignments`, data),
-    onSuccess: () => {
+    onMutate: async (data) => {
+      await qc.cancelQueries({ queryKey: KEYS.assignments(periodId) });
+      const prev = qc.getQueryData<Assignment[]>(KEYS.assignments(periodId));
+      qc.setQueryData<Assignment[]>(KEYS.assignments(periodId), (old = []) => [
+        ...old,
+        { id: -Date.now(), schedule_period_id: periodId, member_id: data.member_id, date: data.date, shift_type_id: data.shift_type_id, start_time: null, end_time: null, assignment_source: "manual", is_locked: false },
+      ]);
+      return { prev };
+    },
+    onError: (_err, _data, ctx) => {
+      if (ctx?.prev) qc.setQueryData(KEYS.assignments(periodId), ctx.prev);
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: KEYS.assignments(periodId) });
       qc.invalidateQueries({ queryKey: KEYS.warnings(periodId) });
     },
@@ -66,7 +78,18 @@ export function useDeleteAssignment(periodId: number) {
   return useMutation({
     mutationFn: (assignmentId: number) =>
       api.delete(`/api/schedule-periods/${periodId}/assignments/${assignmentId}`),
-    onSuccess: () => {
+    onMutate: async (assignmentId) => {
+      await qc.cancelQueries({ queryKey: KEYS.assignments(periodId) });
+      const prev = qc.getQueryData<Assignment[]>(KEYS.assignments(periodId));
+      qc.setQueryData<Assignment[]>(KEYS.assignments(periodId), (old = []) =>
+        old.filter((a) => a.id !== assignmentId),
+      );
+      return { prev };
+    },
+    onError: (_err, _data, ctx) => {
+      if (ctx?.prev) qc.setQueryData(KEYS.assignments(periodId), ctx.prev);
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: KEYS.assignments(periodId) });
       qc.invalidateQueries({ queryKey: KEYS.warnings(periodId) });
     },
@@ -78,7 +101,7 @@ export function useBulkCreateAssignments(periodId: number) {
   return useMutation({
     mutationFn: (assignments: AssignmentCreate[]) =>
       api.post<Assignment[]>(`/api/schedule-periods/${periodId}/assignments/bulk`, { assignments }),
-    onSuccess: () => {
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: KEYS.assignments(periodId) });
       qc.invalidateQueries({ queryKey: KEYS.warnings(periodId) });
     },
@@ -90,7 +113,25 @@ export function useBulkUpdateAssignments(periodId: number) {
   return useMutation({
     mutationFn: (data: { ids: number[]; shift_type_id?: number; is_locked?: boolean }) =>
       api.put<Assignment[]>(`/api/schedule-periods/${periodId}/assignments/bulk`, data),
-    onSuccess: () => {
+    onMutate: async (data) => {
+      await qc.cancelQueries({ queryKey: KEYS.assignments(periodId) });
+      const prev = qc.getQueryData<Assignment[]>(KEYS.assignments(periodId));
+      qc.setQueryData<Assignment[]>(KEYS.assignments(periodId), (old = []) =>
+        old.map((a) => {
+          if (!data.ids.includes(a.id)) return a;
+          return {
+            ...a,
+            ...(data.shift_type_id !== undefined && !a.is_locked ? { shift_type_id: data.shift_type_id } : {}),
+            ...(data.is_locked !== undefined ? { is_locked: data.is_locked } : {}),
+          };
+        }),
+      );
+      return { prev };
+    },
+    onError: (_err, _data, ctx) => {
+      if (ctx?.prev) qc.setQueryData(KEYS.assignments(periodId), ctx.prev);
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: KEYS.assignments(periodId) });
       qc.invalidateQueries({ queryKey: KEYS.warnings(periodId) });
     },
@@ -102,7 +143,18 @@ export function useBulkDeleteAssignments(periodId: number) {
   return useMutation({
     mutationFn: (ids: number[]) =>
       api.delete(`/api/schedule-periods/${periodId}/assignments/bulk`, { ids }),
-    onSuccess: () => {
+    onMutate: async (ids) => {
+      await qc.cancelQueries({ queryKey: KEYS.assignments(periodId) });
+      const prev = qc.getQueryData<Assignment[]>(KEYS.assignments(periodId));
+      qc.setQueryData<Assignment[]>(KEYS.assignments(periodId), (old = []) =>
+        old.filter((a) => !ids.includes(a.id) || a.is_locked),
+      );
+      return { prev };
+    },
+    onError: (_err, _data, ctx) => {
+      if (ctx?.prev) qc.setQueryData(KEYS.assignments(periodId), ctx.prev);
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: KEYS.assignments(periodId) });
       qc.invalidateQueries({ queryKey: KEYS.warnings(periodId) });
     },
@@ -114,7 +166,18 @@ export function useToggleLock(periodId: number) {
   return useMutation({
     mutationFn: ({ assignmentId, is_locked }: { assignmentId: number; is_locked: boolean }) =>
       api.put<Assignment>(`/api/schedule-periods/${periodId}/assignments/${assignmentId}`, { is_locked }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.assignments(periodId) }),
+    onMutate: async ({ assignmentId, is_locked }) => {
+      await qc.cancelQueries({ queryKey: KEYS.assignments(periodId) });
+      const prev = qc.getQueryData<Assignment[]>(KEYS.assignments(periodId));
+      qc.setQueryData<Assignment[]>(KEYS.assignments(periodId), (old = []) =>
+        old.map((a) => a.id === assignmentId ? { ...a, is_locked } : a),
+      );
+      return { prev };
+    },
+    onError: (_err, _data, ctx) => {
+      if (ctx?.prev) qc.setQueryData(KEYS.assignments(periodId), ctx.prev);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: KEYS.assignments(periodId) }),
   });
 }
 

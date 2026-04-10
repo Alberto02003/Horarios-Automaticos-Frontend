@@ -3,6 +3,7 @@ import { useCalendarData, type CalendarDataProps } from "@/components/calendar/u
 import MonthView from "@/components/calendar/MonthView";
 import WeekView from "@/components/calendar/WeekView";
 import DayView from "@/components/calendar/DayView";
+import { CalendarSkeleton } from "@/components/ui/Skeleton";
 
 type CalView = "month" | "week" | "day" | "grid";
 
@@ -30,6 +31,8 @@ export default function ScheduleCalendar({ view = "week", onViewChange, ...rest 
       ))}
     </div>
   ) : null;
+
+  if (!data.assignments) return <CalendarSkeleton />;
 
   switch (view) {
     case "month": return <MonthView data={data} viewToggle={viewToggle} />;

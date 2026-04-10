@@ -1,4 +1,6 @@
+import { memo } from "react";
 import { Calendar, FileEdit, CheckCircle2, Users, Clock } from "lucide-react";
+import { StatsSkeleton, CardSkeleton } from "@/components/ui/Skeleton";
 import type { SchedulePeriod } from "@/types/schedule";
 import type { Member } from "@/types/member";
 import type { ShiftType } from "@/types/shift";
@@ -12,9 +14,21 @@ interface Props {
   onOpenPeriod: (p: SchedulePeriod) => void;
   onOpenTeam: () => void;
   onOpenShifts: () => void;
+  loading?: boolean;
 }
 
-export default function HomePage({ drafts, activeCurrentYear, activeMembers, activeShifts, currentYear, onOpenPeriod, onOpenTeam, onOpenShifts }: Props) {
+export default memo(function HomePage({ drafts, activeCurrentYear, activeMembers, activeShifts, currentYear, onOpenPeriod, onOpenTeam, onOpenShifts, loading }: Props) {
+  if (loading) {
+    return (
+      <div className="px-4 sm:px-6 py-4 sm:py-6 max-w-5xl mx-auto space-y-8">
+        <StatsSkeleton />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }, (_, i) => <CardSkeleton key={i} />)}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="px-4 sm:px-6 py-4 sm:py-6 max-w-5xl mx-auto">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
@@ -89,4 +103,4 @@ export default function HomePage({ drafts, activeCurrentYear, activeMembers, act
       </div>
     </div>
   );
-}
+});

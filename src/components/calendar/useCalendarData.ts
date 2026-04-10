@@ -4,7 +4,7 @@ import { useMembers } from "@/api/members";
 import { useShiftTypes } from "@/api/shiftTypes";
 import { useAssignments } from "@/api/schedule";
 import { useMemberMap, useShiftMap, useAssignmentsByDate } from "@/hooks/useMaps";
-import { useDrag, type DragPayload } from "@/components/drag/DragContext";
+import { useDrag } from "@/components/drag/DragContext";
 import { MONTHS_FULL, MONTHS_SHORT, DAYS_SHORT } from "@/constants";
 import type { Assignment } from "@/types/schedule";
 
@@ -26,9 +26,9 @@ export function useCalendarData(props: CalendarDataProps) {
   const dragCtx = useDrag();
   const isMobile = useIsMobile();
 
-  const periodStart = new Date(startDate + "T00:00:00");
-  const periodEnd = new Date(endDate + "T00:00:00");
-  const today = new Date().toISOString().slice(0, 10);
+  const periodStart = useMemo(() => new Date(startDate + "T00:00:00"), [startDate]);
+  const periodEnd = useMemo(() => new Date(endDate + "T00:00:00"), [endDate]);
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   // Responsive layout values
   const ROW_HEIGHT = isMobile ? 2.5 : 3.5;
@@ -84,12 +84,10 @@ export function useCalendarData(props: CalendarDataProps) {
   const handleDrop = useCallback((e: React.DragEvent, date: string) => {
     e.preventDefault();
     dragCtx?.setHighlightedDate(null);
-    try {
-      const data = e.dataTransfer.getData("application/json");
-      const payload: DragPayload = JSON.parse(data);
-      if (payload.type === "move-assignment" && payload.sourceDate === date) return;
-      dragCtx?.setDropResult({ date, payload, x: e.clientX, y: e.clientY });
-    } catch { /* ignore */ }
+    const payload = dragCtx?.dragPayload;
+    if (!payload) return;
+    if (payload.type === "move-assignment" && payload.sourceDate === date) return;
+    dragCtx?.setDropResult({ date, payload, x: e.clientX, y: e.clientY });
   }, [dragCtx]);
 
   return {
@@ -106,17 +104,3 @@ export function useCalendarData(props: CalendarDataProps) {
 }
 
 export type CalendarData = ReturnType<typeof useCalendarData>;
-
-export function timeToMinutes(timeStr: string | null, fallback: number): number {
-  if (!timeStr) return fallback;
-  const [h, m] = timeStr.split(":").map(Number);
-  return h * 60 + m;
-}
-
-export function getMondayOfWeek(date: Date): Date {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  d.setDate(diff);
-  return d;
-}

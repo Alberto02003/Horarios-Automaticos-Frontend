@@ -7,7 +7,6 @@ import CatPaws from "@/components/CatPaws";
 
 interface LoginResponse {
   access_token: string;
-  refresh_token: string;
 }
 
 export default function LoginPage() {
@@ -24,7 +23,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const data = await api.post<LoginResponse>("/api/auth/login", { email, password });
-      login(data.access_token, data.refresh_token);
+      login(data.access_token);
       navigate("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error de conexion");

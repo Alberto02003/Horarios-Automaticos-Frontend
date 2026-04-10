@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -14,6 +15,12 @@ export default defineConfig({
   },
   // Prevent Vite from obscuring Rust errors
   clearScreen: false,
+  test: {
+    globals: true,
+    environment: "jsdom",
+    setupFiles: "./src/test/setup.ts",
+    exclude: ["e2e/**", "node_modules/**"],
+  },
   server: {
     // Tauri expects a fixed port
     port: 5173,

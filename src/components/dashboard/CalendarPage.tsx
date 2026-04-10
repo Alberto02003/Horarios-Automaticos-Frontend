@@ -38,10 +38,10 @@ export default function CalendarPage({ calendarPeriod, calView, setCalView, sele
               <button onClick={onActivate} className="btn-pastel-mint text-[11px] px-3 py-1.5 rounded-xl"><CheckCircle size={13} /> Activar</button>
             )}
             <Tooltip content="Exportar Excel">
-              <button onClick={() => onExportExcel(calendarPeriod)} className="p-2 rounded-xl hover:bg-p-lavender-light transition-colors"><Download size={14} className="text-text-secondary" /></button>
+              <button onClick={() => onExportExcel(calendarPeriod)} aria-label="Exportar Excel" className="p-2 rounded-xl hover:bg-p-lavender-light transition-colors"><Download size={14} className="text-text-secondary" /></button>
             </Tooltip>
             <Tooltip content="Eliminar periodo">
-              <button onClick={onDelete} className="p-2 rounded-xl hover:bg-p-pink-light transition-colors"><Trash2 size={14} className="text-text-tertiary" /></button>
+              <button onClick={onDelete} aria-label="Eliminar periodo" className="p-2 rounded-xl hover:bg-p-pink-light transition-colors"><Trash2 size={14} className="text-text-tertiary" /></button>
             </Tooltip>
           </div>
           <div className="flex items-center gap-1 bg-[#F0EDF3]/50 rounded-xl p-0.5 self-start sm:self-auto">
@@ -52,7 +52,7 @@ export default function CalendarPage({ calendarPeriod, calView, setCalView, sele
               { mode: "grid" as CalView, icon: LayoutGrid, tip: "Tabla" },
             ]).map((v) => (
               <Tooltip key={v.mode} content={v.tip}>
-                <button onClick={() => setCalView(v.mode)} className={`p-2 sm:p-1.5 rounded-lg transition-colors ${calView === v.mode ? "bg-white shadow-xs text-text-primary" : "text-text-tertiary hover:text-text-secondary"}`}>
+                <button onClick={() => setCalView(v.mode)} aria-label={`Vista ${v.tip}`} className={`p-2 sm:p-1.5 rounded-lg transition-colors ${calView === v.mode ? "bg-white shadow-xs text-text-primary" : "text-text-tertiary hover:text-text-secondary"}`}>
                   <v.icon size={15} />
                 </button>
               </Tooltip>

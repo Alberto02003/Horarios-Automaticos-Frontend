@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "./client";
+import { api, API_BASE } from "./client";
 
 interface UserProfile {
   id: number;
@@ -21,11 +21,11 @@ export function useUploadAvatar() {
   return useMutation({
     mutationFn: async (file: File) => {
       const token = localStorage.getItem("token");
-      const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8080";
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch(`${apiBase}/api/auth/avatar`, {
+      const res = await fetch(`${API_BASE}/api/auth/avatar`, {
         method: "POST",
+        credentials: "include",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });

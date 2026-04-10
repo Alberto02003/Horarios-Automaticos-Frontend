@@ -40,9 +40,10 @@ export default function ShiftsTab() {
                 <p className="text-sm font-medium text-text-primary truncate">{st.name}</p>
                 <p className="text-[10px] text-text-tertiary">{CATEGORY_LABELS[st.category]}{st.default_start_time ? ` · ${st.default_start_time}-${st.default_end_time}` : ""}</p>
               </div>
+              {!st.is_active && <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-[#F0EDF3] text-text-tertiary">Inactivo</span>}
               <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Tooltip content="Editar"><button onClick={() => crud.openEdit(st)} className="p-1 rounded-lg hover:bg-p-lavender-light"><Pencil size={11} className="text-text-secondary" /></button></Tooltip>
-                {st.is_active && <Tooltip content="Desactivar"><button onClick={() => crud.openDelete(st)} className="p-1 rounded-lg hover:bg-p-pink-light"><X size={11} className="text-text-secondary" /></button></Tooltip>}
+                <Tooltip content="Editar"><button aria-label="Editar turno" onClick={() => crud.openEdit(st)} className="p-1 rounded-lg hover:bg-p-lavender-light"><Pencil size={11} className="text-text-secondary" /></button></Tooltip>
+                {st.is_active && <Tooltip content="Desactivar"><button aria-label="Desactivar turno" onClick={() => crud.openDelete(st)} className="p-1 rounded-lg hover:bg-p-pink-light"><X size={11} className="text-text-secondary" /></button></Tooltip>}
               </div>
             </div>
           ))}
