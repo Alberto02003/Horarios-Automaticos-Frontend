@@ -1,18 +1,7 @@
 import { useState, useEffect } from "react";
 import Select from "@/components/ui/Select";
+import { CATEGORY_OPTIONS, PRESET_COLORS } from "@/constants";
 import type { ShiftType, ShiftTypeCreate } from "@/types/shift";
-
-const CATEGORY_OPTIONS = [
-  { value: "work", label: "Trabajo" },
-  { value: "vacation", label: "Vacaciones" },
-  { value: "special", label: "Especial" },
-];
-
-const PRESET_COLORS = [
-  "#3B82F6", "#F59E0B", "#6366F1", "#10B981",
-  "#EF4444", "#9CA3AF", "#F472B6", "#8B5CF6",
-  "#14B8A6", "#FB923C",
-];
 
 interface Props {
   shiftType?: ShiftType | null;

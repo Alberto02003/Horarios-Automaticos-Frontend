@@ -1,7 +1,6 @@
 import { Settings } from "lucide-react";
 import { useShiftTypes } from "@/api/shiftTypes";
-
-const CATEGORY_LABELS: Record<string, string> = { work: "Trabajo", vacation: "Vacaciones", special: "Especial" };
+import { CATEGORY_LABELS } from "@/constants";
 
 interface Props {
   onOpenConfig?: () => void;

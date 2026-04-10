@@ -1,11 +1,6 @@
 import { useState, useEffect } from "react";
+import { PRESET_COLORS } from "@/constants";
 import type { Member, MemberCreate } from "@/types/member";
-
-const PRESET_COLORS = [
-  "#F472B6", "#FB923C", "#FBBF24", "#A3E635",
-  "#34D399", "#22D3EE", "#818CF8", "#C084FC",
-  "#F87171", "#9CA3AF",
-];
 
 interface Props {
   member?: Member | null;

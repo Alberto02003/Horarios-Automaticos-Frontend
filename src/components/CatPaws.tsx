@@ -13,16 +13,8 @@ const PAW_SVG = (
   </g>
 );
 
-const PASTEL_COLORS = [
-  "#FFD1DC", // pink
-  "#A2CFFE", // blue
-  "#AAF0D1", // mint
-  "#E3E4FA", // lavender
-  "#DCD0FF", // lilac
-  "#FFDAB9", // peach
-  "#B0E0E6", // powder blue
-  "#FFFACD", // yellow
-];
+import { PASTEL_COLORS } from "@/constants";
+
 
 interface PawStep {
   x: number;
